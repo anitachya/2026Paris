@@ -663,7 +663,8 @@ const seedExpenses=[
 function setSyncStatus(status, msg) {
   const bar=document.getElementById('sync-bar');
   const msgEl=document.getElementById('sync-msg');
-  bar.className=''; bar.classList.add(status);
+  bar.className='';
+  if(status) bar.classList.add(status);
   msgEl.textContent=msg;
 }
 
