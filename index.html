@@ -1,0 +1,1161 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Paris 2026 ✦ Mon Voyage</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<!-- No Firebase SDK needed - using REST API directly -->
+<!-- SheetJS for Excel export -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+  :root{--cream:#F5F0E8;--dark:#1A1410;--gold:#C9A84C;--gold-light:#E8D5A3;--rose:#C4776A;--sage:#7A9E87;--blue:#4A6FA5;--warm-gray:#8C7B6B;--card-bg:#FDFAF5;--border:rgba(201,168,76,0.25);--shadow:0 4px 24px rgba(26,20,16,0.08);}
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{background:var(--cream);color:var(--dark);font-family:'DM Sans',sans-serif;min-height:100vh;overflow-x:hidden;}
+
+  /* SYNC STATUS BAR */
+  #sync-bar{background:var(--dark);color:var(--gold-light);font-size:.68rem;text-align:center;padding:4px 16px;letter-spacing:.06em;display:flex;align-items:center;justify-content:center;gap:8px;min-height:24px;}
+  #sync-bar.synced{background:#2a3d2a;}
+  #sync-bar.error{background:#4a2020;}
+  .sync-dot{width:6px;height:6px;border-radius:50%;background:var(--gold);display:inline-block;flex-shrink:0;}
+  #sync-bar.synced .sync-dot{background:#7ec87e;animation:pulse 2s ease-in-out infinite;}
+  #sync-bar.error .sync-dot{background:var(--rose);}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+
+  header{background:var(--dark);color:var(--cream);padding:16px 28px;position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--gold);}
+  .header-left h1{font-family:'Playfair Display',serif;font-size:1.4rem;letter-spacing:.02em;}
+  .header-left h1 span{color:var(--gold);font-style:italic;}
+  .header-left p{font-size:.66rem;color:var(--gold-light);letter-spacing:.12em;text-transform:uppercase;margin-top:2px;}
+  .header-right{display:flex;gap:6px;flex-wrap:wrap;align-items:center;}
+  .nav-btn{background:transparent;border:1px solid rgba(201,168,76,.4);color:var(--cream);padding:6px 13px;border-radius:4px;font-family:'DM Sans',sans-serif;font-size:.74rem;cursor:pointer;transition:all .2s;letter-spacing:.04em;}
+  .nav-btn:hover,.nav-btn.active{background:var(--gold);color:var(--dark);border-color:var(--gold);}
+  .export-btn{background:transparent;border:1px solid rgba(122,158,135,.5);color:#a8d5a2;padding:6px 13px;border-radius:4px;font-family:'DM Sans',sans-serif;font-size:.74rem;cursor:pointer;transition:all .2s;}
+  .export-btn:hover{background:var(--sage);color:var(--dark);border-color:var(--sage);}
+
+  main{max-width:1400px;margin:0 auto;padding:24px 24px 80px;}
+  .tab-section{display:none;}.tab-section.active{display:block;}
+
+  .view-toggle{display:flex;gap:3px;background:rgba(26,20,16,.06);border-radius:6px;padding:3px;}
+  .view-btn{padding:5px 12px;border-radius:4px;border:none;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:.73rem;background:transparent;color:var(--warm-gray);transition:all .2s;}
+  .view-btn.active{background:var(--dark);color:var(--cream);}
+
+  .section-title{font-family:'Playfair Display',serif;font-size:1.2rem;color:var(--dark);display:flex;align-items:center;gap:12px;margin-bottom:16px;}
+  .section-title::after{content:'';flex:1;height:1px;background:var(--border);}
+
+  /* CALENDAR */
+  .calendar-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px;}
+  .calendar-month{font-family:'Playfair Display',serif;font-size:1.3rem;display:flex;align-items:center;gap:12px;}
+  .cal-nav{background:none;border:1px solid var(--border);color:var(--dark);width:30px;height:30px;border-radius:50%;cursor:pointer;font-size:1rem;display:flex;align-items:center;justify-content:center;transition:all .2s;}
+  .cal-nav:hover{background:var(--gold);color:white;border-color:var(--gold);}
+  .calendar-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;}
+  .cal-day-header{text-align:center;padding:6px;font-size:.64rem;font-weight:500;color:var(--warm-gray);letter-spacing:.1em;text-transform:uppercase;}
+  .cal-day{min-height:105px;background:var(--card-bg);border:1px solid var(--border);border-radius:6px;padding:6px;position:relative;transition:box-shadow .2s;cursor:pointer;}
+  .cal-day:hover{box-shadow:var(--shadow);}
+  .cal-day.other-month{opacity:.3;}
+  .cal-day.trip-day{background:linear-gradient(135deg,#FDFAF5 0%,#FDF6E8 100%);}
+  .cal-day.trip-day.has-events{border-left:3px solid var(--gold);}
+  .day-num{font-family:'DM Mono',monospace;font-size:.72rem;color:var(--warm-gray);margin-bottom:3px;display:flex;align-items:center;justify-content:space-between;}
+  .day-label{font-size:.54rem;color:var(--gold);font-weight:600;letter-spacing:.08em;}
+  .day-events{display:flex;flex-direction:column;gap:2px;}
+  .event-chip{font-size:.57rem;padding:2px 4px;border-radius:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .chip-morning{background:rgba(122,158,135,.2);color:#3d7a55;}
+  .chip-afternoon{background:rgba(74,111,165,.2);color:var(--blue);}
+  .chip-evening{background:rgba(196,119,106,.2);color:var(--rose);}
+  .chip-note{background:rgba(201,168,76,.15);color:#8a6a1a;}
+  .add-more{font-size:.52rem;color:var(--warm-gray);margin-top:2px;}
+  .day-add-btn{position:absolute;bottom:4px;right:4px;width:17px;height:17px;border-radius:50%;background:var(--gold);color:white;border:none;font-size:.78rem;cursor:pointer;display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity .2s;}
+  .cal-day:hover .day-add-btn{opacity:1;}
+
+  /* LIST VIEW */
+  .list-day{border:1px solid var(--border);border-radius:10px;margin-bottom:6px;background:var(--card-bg);overflow:hidden;}
+  .list-day-header{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;cursor:pointer;user-select:none;transition:background .15s;}
+  .list-day-header:hover{background:rgba(201,168,76,.07);}
+  .list-day.trip-day .list-day-header{border-left:4px solid var(--gold);}
+  .list-day-left{display:flex;align-items:center;gap:12px;}
+  .list-day-date{font-family:'DM Mono',monospace;font-size:.78rem;color:var(--warm-gray);min-width:84px;}
+  .list-day-chips{display:flex;gap:3px;flex-wrap:wrap;margin-top:2px;}
+  .list-day-right{display:flex;align-items:center;gap:8px;}
+  .list-count{font-size:.64rem;color:var(--warm-gray);background:rgba(26,20,16,.07);padding:2px 7px;border-radius:10px;}
+  .list-chevron{font-size:.86rem;color:var(--warm-gray);transition:transform .2s;}
+  .list-day.open .list-chevron{transform:rotate(90deg);}
+  .list-day-body{display:none;border-top:1px solid var(--border);padding:10px 14px;}
+  .list-day.open .list-day-body{display:block;}
+  .list-events{display:flex;flex-direction:column;gap:6px;}
+  .list-event-item{background:white;border:1px solid var(--border);border-radius:7px;padding:8px 10px;display:flex;align-items:flex-start;gap:7px;cursor:grab;transition:all .15s;}
+  .list-event-item:active{cursor:grabbing;opacity:.7;}
+  .list-event-item.dragging{opacity:.4;}
+  .list-event-item.drag-over{border-color:var(--gold);box-shadow:0 0 0 2px rgba(201,168,76,.3);}
+  .list-add-btn{background:none;border:1px dashed var(--border);border-radius:6px;width:100%;padding:6px;font-size:.72rem;color:var(--warm-gray);cursor:pointer;transition:all .15s;font-family:'DM Sans',sans-serif;margin-top:6px;}
+  .list-add-btn:hover{border-color:var(--gold);color:var(--gold);}
+
+  /* PANEL */
+  .detail-panel{position:fixed;right:0;top:0;bottom:0;width:380px;background:var(--card-bg);border-left:1px solid var(--border);box-shadow:-8px 0 40px rgba(26,20,16,.12);transform:translateX(100%);transition:transform .3s ease;z-index:200;overflow-y:auto;padding:22px;display:flex;flex-direction:column;gap:14px;}
+  .detail-panel.open{transform:translateX(0);}
+  .panel-header{display:flex;align-items:center;justify-content:space-between;}
+  .panel-date{font-family:'Playfair Display',serif;font-size:1.15rem;}
+  .panel-close{background:none;border:1px solid var(--border);color:var(--dark);width:28px;height:28px;border-radius:50%;cursor:pointer;font-size:1rem;display:flex;align-items:center;justify-content:center;}
+  .panel-close:hover{background:var(--rose);color:white;border-color:var(--rose);}
+  .event-list{display:flex;flex-direction:column;gap:7px;}
+  .event-item{background:white;border:1px solid var(--border);border-radius:8px;padding:9px 11px;display:flex;align-items:flex-start;gap:7px;cursor:grab;transition:all .2s;}
+  .event-item:active{cursor:grabbing;opacity:.7;}
+  .event-item.dragging{opacity:.4;}
+  .event-item.drag-over{border-color:var(--gold);box-shadow:0 0 0 2px rgba(201,168,76,.3);}
+  .event-dot{width:6px;height:6px;border-radius:50%;margin-top:4px;flex-shrink:0;}
+  .dot-morning{background:var(--sage);}.dot-afternoon{background:var(--blue);}.dot-evening{background:var(--rose);}.dot-note{background:var(--gold);}
+  .event-content{flex:1;min-width:0;}
+  .event-name{font-size:.8rem;font-weight:500;}
+  .event-name a{color:var(--blue);text-decoration:none;}
+  .event-name a:hover{text-decoration:underline;}
+  .event-time{font-family:'DM Mono',monospace;font-size:.66rem;color:var(--warm-gray);margin-top:1px;}
+  .event-note-text{font-size:.67rem;color:var(--warm-gray);margin-top:2px;font-style:italic;}
+  .event-actions{display:flex;gap:3px;opacity:0;transition:opacity .2s;}
+  .event-item:hover .event-actions{opacity:1;}
+  .act-btn{background:none;border:none;cursor:pointer;padding:2px 4px;font-size:.74rem;border-radius:3px;color:var(--warm-gray);transition:all .15s;}
+  .act-btn:hover{background:var(--cream);color:var(--dark);}
+  .act-btn.del:hover{background:rgba(196,119,106,.15);color:var(--rose);}
+  .drag-handle{cursor:grab;color:var(--warm-gray);font-size:.74rem;padding:2px;flex-shrink:0;}
+  .panel-add-btn{background:var(--dark);color:var(--cream);border:none;padding:8px 14px;border-radius:6px;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:.77rem;display:flex;align-items:center;gap:5px;transition:all .2s;}
+  .panel-add-btn:hover{background:var(--gold);color:var(--dark);}
+  .hotel-info{background:rgba(201,168,76,.1);border:1px solid var(--border);border-radius:8px;padding:10px 12px;}
+  .hotel-label{font-size:.6rem;text-transform:uppercase;letter-spacing:.1em;color:var(--warm-gray);margin-bottom:3px;}
+  .hotel-name{font-size:.83rem;font-weight:500;}
+  .hotel-addr{font-size:.67rem;color:var(--warm-gray);margin-top:2px;}
+
+  /* TICKETS */
+  .tickets-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:12px;margin-bottom:16px;}
+  .ticket-card{background:var(--card-bg);border:1px solid var(--border);border-radius:12px;padding:14px;position:relative;overflow:hidden;transition:all .2s;}
+  .ticket-card:hover{box-shadow:var(--shadow);transform:translateY(-2px);}
+  .ticket-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--gold);}
+  .ticket-card.status-confirmed::before{background:var(--sage);}
+  .ticket-card.status-used::before{background:var(--warm-gray);}
+  .ticket-status-badge{display:inline-flex;align-items:center;gap:4px;font-size:.6rem;padding:2px 7px;border-radius:20px;font-weight:500;letter-spacing:.05em;margin-bottom:7px;}
+  .badge-confirmed{background:rgba(122,158,135,.15);color:#3d7a55;}
+  .badge-pending{background:rgba(201,168,76,.15);color:#8a6a1a;}
+  .badge-used{background:rgba(140,123,107,.15);color:var(--warm-gray);}
+  .ticket-name{font-family:'Playfair Display',serif;font-size:.94rem;margin-bottom:5px;}
+  .ticket-meta{font-size:.68rem;color:var(--warm-gray);display:flex;flex-direction:column;gap:2px;}
+  .ticket-meta span{display:flex;align-items:center;gap:4px;}
+  .qr-area{margin-top:10px;border:1px dashed var(--border);border-radius:8px;padding:8px;text-align:center;cursor:pointer;transition:all .2s;}
+  .qr-area:hover{border-color:var(--gold);background:rgba(201,168,76,.05);}
+  .qr-area img{max-width:100px;max-height:100px;border-radius:4px;}
+  .qr-placeholder{color:var(--warm-gray);font-size:.67rem;padding:8px 0;}
+  .qr-placeholder .qr-icon{font-size:1.5rem;display:block;margin-bottom:2px;}
+  .ticket-actions{display:flex;gap:6px;margin-top:9px;}
+  .t-btn{flex:1;padding:5px;border-radius:5px;font-size:.68rem;cursor:pointer;border:1px solid var(--border);background:white;color:var(--dark);transition:all .15s;font-family:'DM Sans',sans-serif;}
+  .t-btn:hover{background:var(--dark);color:white;border-color:var(--dark);}
+  .t-btn.danger:hover{background:var(--rose);border-color:var(--rose);color:white;}
+  .add-ticket-btn{background:white;border:2px dashed var(--border);border-radius:12px;padding:24px;width:100%;cursor:pointer;color:var(--warm-gray);font-family:'DM Sans',sans-serif;font-size:.8rem;transition:all .2s;display:flex;flex-direction:column;align-items:center;gap:4px;}
+  .add-ticket-btn:hover{border-color:var(--gold);color:var(--gold);}
+  .add-ticket-btn .plus{font-size:1.3rem;}
+
+  /* EXPENSES */
+  .expense-layout{display:grid;grid-template-columns:1fr 370px;gap:18px;}
+  @media(max-width:960px){.expense-layout{grid-template-columns:1fr;}}
+  .expense-table-wrap{overflow-x:auto;}
+  table{width:100%;border-collapse:collapse;background:var(--card-bg);border-radius:10px;overflow:hidden;}
+  th{background:var(--dark);color:var(--cream);padding:8px 10px;text-align:left;font-size:.66rem;letter-spacing:.08em;text-transform:uppercase;font-weight:400;}
+  td{padding:8px 10px;font-size:.77rem;border-bottom:1px solid var(--border);vertical-align:middle;}
+  tr:last-child td{border-bottom:none;}
+  tr:hover td{background:rgba(201,168,76,.04);}
+  .cat-badge{display:inline-block;padding:2px 6px;border-radius:12px;font-size:.6rem;font-weight:500;}
+  .cat-flight{background:rgba(74,111,165,.15);color:#2a4f8a;}
+  .cat-hotel{background:rgba(140,123,107,.15);color:var(--warm-gray);}
+  .cat-sight{background:rgba(201,168,76,.15);color:#8a6a1a;}
+  .cat-transport{background:rgba(90,160,180,.15);color:#2a7a90;}
+  .cat-food{background:rgba(122,158,135,.15);color:#3d7a55;}
+  .cat-shopping{background:rgba(196,119,106,.15);color:var(--rose);}
+  .cat-other{background:rgba(26,20,16,.08);color:var(--dark);}
+  .pay-badge{display:inline-flex;align-items:center;gap:3px;padding:2px 6px;border-radius:10px;font-size:.59rem;font-weight:500;}
+  .pay-card{background:rgba(74,111,165,.12);color:var(--blue);}
+  .pay-cash{background:rgba(122,158,135,.12);color:#3d7a55;}
+  .pay-mix{background:rgba(201,168,76,.12);color:#8a6a1a;}
+  .amount-eur{font-family:'DM Mono',monospace;font-weight:500;}
+  .amount-twd{font-family:'DM Mono',monospace;font-size:.66rem;color:var(--warm-gray);}
+
+  .expense-sidebar{display:flex;flex-direction:column;gap:12px;}
+  .exchange-box{background:var(--card-bg);border:1px solid var(--border);border-radius:12px;padding:12px;}
+  .exch-label{font-size:.63rem;text-transform:uppercase;letter-spacing:.1em;color:var(--warm-gray);margin-bottom:6px;}
+  .exch-rate{font-family:'DM Mono',monospace;font-size:.98rem;font-weight:500;}
+  .exch-rate input{width:70px;font-family:'DM Mono',monospace;font-size:.92rem;border:none;border-bottom:1px solid var(--gold);background:transparent;color:var(--dark);padding:0 3px;outline:none;}
+  .sum-cards{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
+  .sum-card{background:var(--dark);color:var(--cream);border-radius:10px;padding:12px 13px;}
+  .sum-card.card-cash{background:#3a5a37;}
+  .sum-card-label{font-size:.59rem;letter-spacing:.07em;text-transform:uppercase;color:rgba(255,255,255,.55);margin-bottom:4px;}
+  .sum-card-eur{font-family:'Playfair Display',serif;font-size:1.28rem;color:var(--gold);}
+  .sum-card.card-cash .sum-card-eur{color:#a8d5a2;}
+  .sum-card-twd{font-size:.66rem;color:rgba(255,255,255,.4);margin-top:1px;}
+  .sum-total-card{background:var(--dark);border-radius:10px;padding:14px;border:1px solid var(--gold);}
+  .sum-total-label{font-size:.59rem;letter-spacing:.08em;text-transform:uppercase;color:var(--gold-light);margin-bottom:6px;}
+  .sum-total-eur{font-family:'Playfair Display',serif;font-size:1.8rem;color:var(--gold);}
+  .sum-total-twd{font-size:.74rem;color:rgba(245,240,232,.5);margin-top:2px;}
+  .bar-chart{background:var(--card-bg);border:1px solid var(--border);border-radius:12px;padding:12px;}
+  .bar-chart-title{font-size:.63rem;text-transform:uppercase;letter-spacing:.1em;color:var(--warm-gray);margin-bottom:9px;}
+  .bar-row{margin-bottom:8px;}
+  .bar-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:3px;}
+  .bar-label{font-size:.68rem;color:var(--dark);}
+  .bar-amounts{font-family:'DM Mono',monospace;font-size:.63rem;color:var(--warm-gray);display:flex;gap:6px;flex-wrap:wrap;}
+  .bar-track{height:6px;background:rgba(26,20,16,.08);border-radius:4px;overflow:hidden;}
+  .bar-stack{height:100%;display:flex;}
+  .bar-card-fill{height:100%;background:var(--blue);opacity:.7;transition:width .4s ease;}
+  .bar-cash-fill{height:100%;background:var(--sage);opacity:.7;transition:width .4s ease;}
+
+  /* EXPORT PANEL */
+  .export-panel{background:var(--card-bg);border:1px solid var(--border);border-radius:12px;padding:14px;}
+  .export-title{font-size:.63rem;text-transform:uppercase;letter-spacing:.1em;color:var(--warm-gray);margin-bottom:10px;}
+  .export-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;}
+  .export-item-btn{background:white;border:1px solid var(--border);border-radius:8px;padding:10px;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:.74rem;color:var(--dark);transition:all .15s;display:flex;flex-direction:column;align-items:center;gap:4px;}
+  .export-item-btn:hover{background:var(--dark);color:var(--cream);border-color:var(--dark);}
+  .export-item-btn .ei-icon{font-size:1.2rem;}
+  .export-all-btn{width:100%;margin-top:7px;background:var(--sage);border:none;border-radius:8px;padding:10px;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:.78rem;color:white;transition:all .15s;font-weight:500;}
+  .export-all-btn:hover{background:#5d8a6e;}
+
+  /* MODALS */
+  .modal-overlay{position:fixed;inset:0;background:rgba(26,20,16,.6);z-index:500;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .2s;backdrop-filter:blur(4px);}
+  .modal-overlay.open{opacity:1;pointer-events:all;}
+  .modal{background:var(--card-bg);border-radius:14px;padding:22px;width:480px;max-width:95vw;max-height:90vh;overflow-y:auto;transform:translateY(20px);transition:transform .2s;border:1px solid var(--border);}
+  .modal-overlay.open .modal{transform:translateY(0);}
+  .modal-title{font-family:'Playfair Display',serif;font-size:1.05rem;margin-bottom:15px;}
+  .form-group{margin-bottom:11px;}
+  .form-group label{display:block;font-size:.67rem;text-transform:uppercase;letter-spacing:.08em;color:var(--warm-gray);margin-bottom:3px;}
+  .form-group input,.form-group select,.form-group textarea{width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:6px;font-family:'DM Sans',sans-serif;font-size:.81rem;background:white;color:var(--dark);outline:none;transition:border-color .2s;}
+  .form-group input:focus,.form-group select:focus,.form-group textarea:focus{border-color:var(--gold);}
+  .form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  .modal-footer{display:flex;justify-content:flex-end;gap:8px;margin-top:15px;}
+  .btn-cancel{background:white;border:1px solid var(--border);color:var(--dark);padding:7px 15px;border-radius:6px;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:.77rem;transition:all .15s;}
+  .btn-cancel:hover{background:var(--cream);}
+  .btn-primary{background:var(--dark);color:var(--cream);border:none;padding:7px 18px;border-radius:6px;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:.77rem;transition:all .2s;}
+  .btn-primary:hover{background:var(--gold);color:var(--dark);}
+  .pay-section{background:rgba(201,168,76,.06);border-radius:8px;padding:11px;margin-bottom:11px;border:1px solid var(--border);}
+  .pay-section-title{font-size:.67rem;text-transform:uppercase;letter-spacing:.08em;color:var(--warm-gray);margin-bottom:9px;}
+  .pay-cols{display:grid;grid-template-columns:1fr 1fr;gap:9px;}
+  .pay-col-title{font-size:.69rem;font-weight:500;margin-bottom:5px;}
+  .pay-col-title.card{color:var(--blue);}.pay-col-title.cash{color:#3d7a55;}
+  .pay-sub{font-size:.61rem;color:var(--warm-gray);margin-bottom:2px;margin-top:4px;}
+  .pay-input{width:100%;padding:5px 8px;border:1px solid var(--border);border-radius:5px;font-family:'DM Mono',monospace;font-size:.78rem;background:white;color:var(--dark);outline:none;}
+  .pay-input:focus{border-color:var(--gold);}
+  .pay-total-row{margin-top:9px;padding-top:7px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+  .pay-total-label{font-size:.66rem;text-transform:uppercase;letter-spacing:.07em;color:var(--warm-gray);}
+  .pay-total-val{font-family:'DM Mono',monospace;font-size:.98rem;font-weight:500;color:var(--dark);}
+  .qr-lightbox{position:fixed;inset:0;background:rgba(26,20,16,.88);z-index:600;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .2s;}
+  .qr-lightbox.open{opacity:1;pointer-events:all;}
+  .qr-lightbox img{max-width:280px;max-height:280px;border-radius:12px;}
+  .qr-lightbox-close{position:absolute;top:20px;right:22px;background:none;border:1px solid rgba(255,255,255,.3);color:white;width:32px;height:32px;border-radius:50%;font-size:1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+  .empty-state{text-align:center;padding:32px 20px;color:var(--warm-gray);}
+  .empty-icon{font-size:1.9rem;margin-bottom:6px;}
+  .empty-state p{font-size:.8rem;}
+  .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--dark);color:var(--cream);padding:8px 17px;border-radius:8px;font-size:.77rem;z-index:999;transition:transform .3s ease;pointer-events:none;}
+  .toast.show{transform:translateX(-50%) translateY(0);}
+</style>
+</head>
+<body>
+
+<!-- SYNC STATUS -->
+<div id="sync-bar">
+  <span class="sync-dot"></span>
+  <span id="sync-msg">正在連線 Firebase...</span>
+</div>
+
+<header>
+  <div class="header-left">
+    <h1>Paris <span>2026</span> ✦ Mon Voyage</h1>
+    <p>May 10 – May 25 &nbsp;·&nbsp; 16 Days in France</p>
+  </div>
+  <div class="header-right">
+    <button class="nav-btn active" onclick="showTab('calendar',this)">📅 行程</button>
+    <button class="nav-btn" onclick="showTab('tickets',this)">🎫 預約</button>
+    <button class="nav-btn" onclick="showTab('expenses',this)">💶 花費</button>
+    <button class="export-btn" onclick="exportAll()">⬇ 匯出 Excel</button>
+  </div>
+</header>
+
+<main>
+  <!-- CALENDAR TAB -->
+  <div id="tab-calendar" class="tab-section active">
+    <div class="calendar-header">
+      <div class="calendar-month">
+        <button class="cal-nav" onclick="prevMonth()">‹</button>
+        <span id="cal-month-label">May 2026</span>
+        <button class="cal-nav" onclick="nextMonth()">›</button>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <div class="view-toggle">
+          <button class="view-btn active" id="vbtn-cal" onclick="switchView('cal')">📅 月曆</button>
+          <button class="view-btn" id="vbtn-list" onclick="switchView('list')">☰ 清單</button>
+        </div>
+        <button class="panel-add-btn" onclick="openEventModal(null)">＋ 新增行程</button>
+      </div>
+    </div>
+    <div id="view-cal">
+      <div class="calendar-grid" id="cal-headers"></div>
+      <div class="calendar-grid" id="cal-grid"></div>
+    </div>
+    <div id="view-list" style="display:none;">
+      <div id="list-view-content"></div>
+    </div>
+  </div>
+
+  <!-- TICKETS TAB -->
+  <div id="tab-tickets" class="tab-section">
+    <div class="section-title">🎫 博物館預約</div>
+    <div class="tickets-grid" id="tickets-grid"></div>
+    <button class="add-ticket-btn" onclick="openTicketModal(null)">
+      <span class="plus">＋</span>新增預約
+    </button>
+  </div>
+
+  <!-- EXPENSES TAB -->
+  <div id="tab-expenses" class="tab-section">
+    <div class="section-title">💶 花費記錄</div>
+    <div class="expense-layout">
+      <div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:11px;flex-wrap:wrap;gap:6px;">
+          <div style="display:flex;gap:5px;flex-wrap:wrap;">
+            <select id="expense-filter-cat" onchange="renderExpenses()" style="padding:5px 8px;border:1px solid var(--border);border-radius:5px;font-size:.72rem;background:white;color:var(--dark);font-family:'DM Sans',sans-serif;">
+              <option value="">所有分類</option>
+              <option value="機票">✈ 機票</option><option value="住宿">🏨 住宿</option>
+              <option value="景點">🎫 景點</option><option value="交通">🚇 交通</option>
+              <option value="餐飲">🍽 餐飲</option><option value="購物">🛍 購物</option>
+              <option value="其他">• 其他</option>
+            </select>
+            <select id="expense-filter-pay" onchange="renderExpenses()" style="padding:5px 8px;border:1px solid var(--border);border-radius:5px;font-size:.72rem;background:white;color:var(--dark);font-family:'DM Sans',sans-serif;">
+              <option value="">所有付款</option>
+              <option value="card">💳 刷卡</option><option value="cash">💵 現金</option><option value="mix">🔀 混合</option>
+            </select>
+            <select id="expense-filter-day" onchange="renderExpenses()" style="padding:5px 8px;border:1px solid var(--border);border-radius:5px;font-size:.72rem;background:white;color:var(--dark);font-family:'DM Sans',sans-serif;">
+              <option value="">所有日期</option>
+            </select>
+          </div>
+          <button class="panel-add-btn" onclick="openExpenseModal(null)">＋ 新增花費</button>
+        </div>
+        <div class="expense-table-wrap">
+          <table>
+            <thead><tr>
+              <th>日期</th><th>項目</th><th>分類</th><th>付款</th>
+              <th>刷卡 €</th><th>現金 €</th><th>總額 €</th><th>TWD</th><th></th>
+            </tr></thead>
+            <tbody id="expense-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="expense-sidebar">
+        <div class="exchange-box">
+          <div class="exch-label">匯率 Exchange Rate</div>
+          <div class="exch-rate">1 € = <input type="number" id="exch-rate" value="35" min="1" onchange="renderExpenses()"> TWD</div>
+        </div>
+        <div class="sum-cards">
+          <div class="sum-card">
+            <div class="sum-card-label">💳 刷卡</div>
+            <div class="sum-card-eur" id="sum-card-eur">€ 0</div>
+            <div class="sum-card-twd" id="sum-card-twd">NT$ 0</div>
+          </div>
+          <div class="sum-card card-cash">
+            <div class="sum-card-label">💵 現金</div>
+            <div class="sum-card-eur" id="sum-cash-eur">€ 0</div>
+            <div class="sum-card-twd" id="sum-cash-twd">NT$ 0</div>
+          </div>
+        </div>
+        <div class="sum-total-card">
+          <div class="sum-total-label">✦ 支出總額</div>
+          <div class="sum-total-eur" id="sum-total-eur">€ 0</div>
+          <div class="sum-total-twd" id="sum-total-twd">NT$ 0</div>
+        </div>
+        <div class="bar-chart">
+          <div class="bar-chart-title">各分類支出</div>
+          <div id="bar-chart-content"></div>
+          <div style="display:flex;gap:10px;margin-top:8px;font-size:.6rem;color:var(--warm-gray);">
+            <span><span style="display:inline-block;width:9px;height:9px;background:var(--blue);opacity:.7;border-radius:2px;margin-right:2px;"></span>刷卡</span>
+            <span><span style="display:inline-block;width:9px;height:9px;background:var(--sage);opacity:.7;border-radius:2px;margin-right:2px;"></span>現金</span>
+          </div>
+        </div>
+        <!-- EXPORT -->
+        <div class="export-panel">
+          <div class="export-title">匯出 Export</div>
+          <div class="export-grid">
+            <button class="export-item-btn" onclick="exportExpenses()">
+              <span class="ei-icon">💶</span><span>花費明細</span>
+            </button>
+            <button class="export-item-btn" onclick="exportItinerary()">
+              <span class="ei-icon">📅</span><span>行程表</span>
+            </button>
+            <button class="export-item-btn" onclick="exportTickets()">
+              <span class="ei-icon">🎫</span><span>預約紀錄</span>
+            </button>
+            <button class="export-item-btn" onclick="exportSummary()">
+              <span class="ei-icon">📊</span><span>分類統計</span>
+            </button>
+          </div>
+          <button class="export-all-btn" onclick="exportAll()">⬇ 一鍵匯出全部（Excel）</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- DETAIL PANEL -->
+<div class="detail-panel" id="detail-panel">
+  <div class="panel-header">
+    <div class="panel-date" id="panel-date">—</div>
+    <button class="panel-close" onclick="closePanel()">×</button>
+  </div>
+  <div id="panel-hotel"></div>
+  <div class="event-list" id="panel-events"></div>
+  <button class="panel-add-btn" id="panel-add-btn">＋ 新增行程</button>
+</div>
+
+<!-- EVENT MODAL -->
+<div class="modal-overlay" id="event-modal">
+  <div class="modal">
+    <div class="modal-title" id="event-modal-title">新增行程</div>
+    <div class="form-row">
+      <div class="form-group"><label>日期</label><input type="date" id="ev-date"></div>
+      <div class="form-group"><label>時段</label>
+        <select id="ev-slot">
+          <option value="morning">☀ 早上</option><option value="afternoon">🌤 下午</option>
+          <option value="evening">🌙 晚上</option><option value="note">📝 備注</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group"><label>景點名稱</label><input type="text" id="ev-name" placeholder="e.g. 羅浮宮"></div>
+    <div class="form-group"><label>時間 (optional)</label><input type="text" id="ev-time" placeholder="e.g. 14:00"></div>
+    <div class="form-group"><label>Google Maps 連結</label><input type="url" id="ev-maps" placeholder="https://maps.google.com/..."></div>
+    <div class="form-group"><label>備注</label><textarea id="ev-note" rows="2" placeholder="需要預約 / 注意事項..."></textarea></div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeEventModal()">取消</button>
+      <button class="btn-primary" onclick="saveEvent()">儲存</button>
+    </div>
+  </div>
+</div>
+
+<!-- TICKET MODAL -->
+<div class="modal-overlay" id="ticket-modal">
+  <div class="modal">
+    <div class="modal-title">預約紀錄</div>
+    <div class="form-group"><label>景點名稱</label><input type="text" id="tk-name" placeholder="e.g. Musée d'Orsay"></div>
+    <div class="form-row">
+      <div class="form-group"><label>日期</label><input type="date" id="tk-date"></div>
+      <div class="form-group"><label>時間</label><input type="time" id="tk-time"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>人數</label><input type="number" id="tk-people" value="2" min="1"></div>
+      <div class="form-group"><label>狀態</label>
+        <select id="tk-status">
+          <option value="pending">⏳ 待確認</option>
+          <option value="confirmed">✅ 已確認</option>
+          <option value="used">✔ 已使用</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group"><label>預約號碼</label><input type="text" id="tk-ref" placeholder="e.g. LVR-2026-XXXX"></div>
+    <div class="form-group"><label>備注</label><textarea id="tk-note" rows="2" placeholder="入場規定、注意事項..."></textarea></div>
+    <div class="form-group">
+      <label>QR Code（拖入或點擊上傳）</label>
+      <div class="qr-area" id="qr-drop-zone" onclick="document.getElementById('qr-file-input').click()" ondragover="event.preventDefault()" ondrop="handleQrDrop(event)">
+        <img id="qr-preview" src="" style="display:none;">
+        <div class="qr-placeholder" id="qr-placeholder"><span class="qr-icon">⬛</span>拖入或點擊上傳</div>
+      </div>
+      <input type="file" id="qr-file-input" accept="image/*" style="display:none" onchange="handleQrFile(event)">
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeTicketModal()">取消</button>
+      <button class="btn-primary" onclick="saveTicket()">儲存</button>
+    </div>
+  </div>
+</div>
+
+<!-- EXPENSE MODAL -->
+<div class="modal-overlay" id="expense-modal">
+  <div class="modal">
+    <div class="modal-title">花費記錄</div>
+    <div class="form-group"><label>項目</label><input type="text" id="exp-name" placeholder="e.g. 羅浮宮門票"></div>
+    <div class="form-row">
+      <div class="form-group"><label>日期</label><input type="date" id="exp-date"></div>
+      <div class="form-group"><label>分類</label>
+        <select id="exp-cat">
+          <option value="機票">✈ 機票</option><option value="住宿">🏨 住宿</option>
+          <option value="景點">🎫 景點（含門票、導覽）</option><option value="交通">🚇 交通</option>
+          <option value="餐飲">🍽 餐飲</option><option value="購物">🛍 購物</option>
+          <option value="其他">• 其他</option>
+        </select>
+      </div>
+    </div>
+    <div class="pay-section">
+      <div class="pay-section-title">付款方式</div>
+      <div class="pay-cols">
+        <div>
+          <div class="pay-col-title card">💳 刷卡 Card</div>
+          <div class="pay-sub">金額 €</div>
+          <input class="pay-input" type="number" id="exp-card-eur" step="0.01" min="0" placeholder="0.00" oninput="syncPay('card-eur')">
+          <div class="pay-sub">折合 NT$</div>
+          <input class="pay-input" type="number" id="exp-card-twd" step="1" min="0" placeholder="自動換算" oninput="syncPay('card-twd')">
+        </div>
+        <div>
+          <div class="pay-col-title cash">💵 現金 Cash</div>
+          <div class="pay-sub">金額 €</div>
+          <input class="pay-input" type="number" id="exp-cash-eur" step="0.01" min="0" placeholder="0.00" oninput="syncPay('cash-eur')">
+          <div class="pay-sub">折合 NT$</div>
+          <input class="pay-input" type="number" id="exp-cash-twd" step="1" min="0" placeholder="自動換算" oninput="syncPay('cash-twd')">
+        </div>
+      </div>
+      <div class="pay-total-row">
+        <span class="pay-total-label">總額 Total</span>
+        <span class="pay-total-val" id="exp-total-display">€ 0.00</span>
+      </div>
+    </div>
+    <div class="form-group"><label>備注</label><input type="text" id="exp-note" placeholder="optional..."></div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeExpenseModal()">取消</button>
+      <button class="btn-primary" onclick="saveExpense()">儲存</button>
+    </div>
+  </div>
+</div>
+
+<div class="qr-lightbox" id="qr-lightbox" onclick="closeQrLightbox()">
+  <button class="qr-lightbox-close">×</button>
+  <img id="qr-lightbox-img" src="" alt="QR">
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+// ══════════════════════════════════════
+//  FIREBASE REST API CONFIG
+// ══════════════════════════════════════
+const FB_URL = 'https://prais-5121b-default-rtdb.asia-southeast1.firebasedatabase.app/paris2026';
+const FB_API_KEY = 'AIzaSyB_lOmCtVXPrOrs30iEZrqh_jyWUeEfbHo';
+
+async function fbGet(path='') {
+  const r = await fetch(`${FB_URL}${path}.json?auth=${FB_API_KEY}`);
+  if(!r.ok) throw new Error('GET failed');
+  return r.json();
+}
+async function fbSet(path, data) {
+  const r = await fetch(`${FB_URL}${path}.json?auth=${FB_API_KEY}`, {
+    method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(data)
+  });
+  if(!r.ok) throw new Error('SET failed');
+  return r.json();
+}
+// Poll for changes every 8 seconds
+let pollInterval = null;
+function startPolling() {
+  if(pollInterval) clearInterval(pollInterval);
+  pollInterval = setInterval(async ()=>{
+    try {
+      const data = await fbGet();
+      if(!data) return;
+      const newEvents   = data.events   ? Object.values(data.events)   : [];
+      const newTickets  = data.tickets  ? Object.values(data.tickets)  : [];
+      const newExpenses = data.expenses ? Object.values(data.expenses) : [];
+      // Only update if changed (simple length check)
+      if(JSON.stringify(newEvents)!==JSON.stringify(state.events)||
+         JSON.stringify(newExpenses)!==JSON.stringify(state.expenses)){
+        state.events=newEvents; state.tickets=newTickets; state.expenses=newExpenses;
+        renderCalendar();
+        if(currentPanelDate) renderPanelEvents(currentPanelDate);
+        if(currentView==='list') renderListView();
+        const activeTab=document.querySelector('.nav-btn.active');
+        if(activeTab){
+          if(activeTab.textContent.includes('預約')) renderTickets();
+          if(activeTab.textContent.includes('花費')) renderExpenses();
+        }
+      }
+      setSyncStatus('synced','🌐 已連線 · '+new Date().toLocaleTimeString('zh-TW'));
+    } catch(e){}
+  }, 8000);
+}
+
+// ══════════════════════════════════════
+//  STATE
+// ══════════════════════════════════════
+const TRIP_START=new Date('2026-05-10');
+const TRIP_END=new Date('2026-05-25');
+let calYear=2026,calMonth=4,currentView='cal',currentPanelDate=null;
+let editingEventId=null,editingTicketId=null,editingExpenseId=null,tempQrData=null,dragId=null;
+let state={events:[],tickets:[],expenses:[]};
+let fbReady=false;
+
+// ── SEED DATA ──
+const seedEvents=[
+  {id:'e1',date:'2026-05-10',slot:'evening',name:'BR87 桃園→巴黎 出發',time:'23:30',maps:'',note:'BR87 桃園二航出發'},
+  {id:'e2',date:'2026-05-11',slot:'morning',name:'老佛爺百貨（圓頂）',time:'',maps:'https://maps.google.com/?q=Galeries+Lafayette+Paris+Haussmann',note:''},
+  {id:'e3',date:'2026-05-11',slot:'morning',name:'紅磨坊',time:'',maps:'https://maps.google.com/?q=Moulin+Rouge+Paris',note:''},
+  {id:'e4',date:'2026-05-11',slot:'note',name:'住宿：巴黎小麻坊',time:'',maps:'https://maps.google.com/?q=44+rue+Pierre+Fontaine+75009+Paris',note:'44 rue Pierre fontaine paris 75009'},
+  {id:'e5',date:'2026-05-12',slot:'morning',name:'抵達巴黎',time:'',maps:'https://maps.google.com/?q=Paris',note:''},
+  {id:'e6',date:'2026-05-12',slot:'morning',name:'鏡廳、國王/皇后套房',time:'',maps:'https://maps.google.com/?q=Chateau+de+Versailles',note:''},
+  {id:'e7',date:'2026-05-12',slot:'afternoon',name:'蒙馬特',time:'',maps:'https://maps.google.com/?q=Montmartre+Paris',note:''},
+  {id:'e8',date:'2026-05-12',slot:'afternoon',name:'聖心堂',time:'',maps:'https://maps.google.com/?q=Sacre+Coeur+Montmartre',note:''},
+  {id:'e9',date:'2026-05-12',slot:'evening',name:'（巴黎歌劇院）',time:'',maps:'https://maps.google.com/?q=Opera+Garnier+Paris',note:''},
+  {id:'e10',date:'2026-05-13',slot:'morning',name:'凡爾賽宮',time:'',maps:'https://maps.google.com/?q=Palace+of+Versailles',note:''},
+  {id:'e11',date:'2026-05-13',slot:'morning',name:'裝飾藝術博物館',time:'',maps:'https://maps.google.com/?q=Musee+des+Arts+Decoratifs+Paris',note:''},
+  {id:'e12',date:'2026-05-13',slot:'afternoon',name:'後花園',time:'',maps:'https://maps.google.com/?q=Jardins+de+Versailles',note:''},
+  {id:'e13',date:'2026-05-13',slot:'afternoon',name:'杜樂麗公園',time:'',maps:'https://maps.google.com/?q=Tuileries+Garden+Paris',note:''},
+  {id:'e14',date:'2026-05-13',slot:'evening',name:'（巴黎歌劇院）',time:'',maps:'https://maps.google.com/?q=Opera+Garnier+Paris',note:''},
+  {id:'e15',date:'2026-05-13',slot:'note',name:'羅浮宮/龐畢度/皮諾假度',time:'',maps:'',note:''},
+  {id:'e16',date:'2026-05-14',slot:'morning',name:'皮諾美術館',time:'',maps:'https://maps.google.com/?q=Bourse+de+Commerce+Pinault+Paris',note:''},
+  {id:'e17',date:'2026-05-14',slot:'afternoon',name:'羅浮宮（有租導覽）',time:'14:00',maps:'https://maps.google.com/?q=Louvre+Museum+Paris',note:'需預約'},
+  {id:'e18',date:'2026-05-14',slot:'afternoon',name:'LE CAFÉ PIERRE HERMÉ',time:'',maps:'https://maps.google.com/?q=Pierre+Herme+Paris',note:'花神咖啡館'},
+  {id:'e19',date:'2026-05-14',slot:'afternoon',name:'奧賽美術館',time:'16:00',maps:'https://maps.google.com/?q=Musee+d+Orsay+Paris',note:''},
+  {id:'e20',date:'2026-05-15',slot:'morning',name:'羅丹美術館',time:'',maps:'https://maps.google.com/?q=Musee+Rodin+Paris',note:'PMP 第2天'},
+  {id:'e21',date:'2026-05-15',slot:'morning',name:'傷兵院（拿破崙墓）',time:'',maps:'https://maps.google.com/?q=Les+Invalides+Paris',note:''},
+  {id:'e22',date:'2026-05-15',slot:'morning',name:'莎士比亞書店',time:'',maps:'https://maps.google.com/?q=Shakespeare+and+Company+Paris',note:''},
+  {id:'e23',date:'2026-05-15',slot:'afternoon',name:'可麗餅店',time:'',maps:'https://maps.google.com/?q=Creperie+Paris',note:''},
+  {id:'e24',date:'2026-05-15',slot:'afternoon',name:'巴黎古監獄',time:'13:00',maps:'https://maps.google.com/?q=Conciergerie+Paris',note:''},
+  {id:'e25',date:'2026-05-15',slot:'afternoon',name:'聖徒禮拜堂',time:'16:00',maps:'https://maps.google.com/?q=Sainte+Chapelle+Paris',note:''},
+  {id:'e26',date:'2026-05-15',slot:'evening',name:'pho 5',time:'',maps:'https://maps.google.com/?q=Pho+5+Paris',note:''},
+  {id:'e27',date:'2026-05-15',slot:'evening',name:'（春天百貨）',time:'',maps:'https://maps.google.com/?q=Printemps+Paris',note:''},
+  {id:'e28',date:'2026-05-15',slot:'evening',name:'（中世紀博物館）',time:'',maps:'https://maps.google.com/?q=Musee+de+Cluny+Paris',note:''},
+  {id:'e29',date:'2026-05-16',slot:'morning',name:'巴黎聖母院（需預約）',time:'10:45',maps:'https://maps.google.com/?q=Notre+Dame+Cathedral+Paris',note:'需要預約'},
+  {id:'e30',date:'2026-05-16',slot:'morning',name:'香榭麗舍大道',time:'',maps:'https://maps.google.com/?q=Champs+Elysees+Paris',note:''},
+  {id:'e31',date:'2026-05-16',slot:'afternoon',name:'凱旋門（需預約）',time:'',maps:'https://maps.google.com/?q=Arc+de+Triomphe+Paris',note:''},
+  {id:'e32',date:'2026-05-16',slot:'afternoon',name:'建築與遺產城',time:'16:00',maps:'https://maps.google.com/?q=Cite+de+l+Architecture+Paris',note:''},
+  {id:'e33',date:'2026-05-16',slot:'evening',name:'艾菲爾鐵塔拍照',time:'18:00',maps:'https://maps.google.com/?q=Eiffel+Tower+Paris',note:''},
+  {id:'e34',date:'2026-05-16',slot:'evening',name:'（雅克瑪爾博物館）',time:'',maps:'https://maps.google.com/?q=Musee+Jacquemart+Andre+Paris',note:''},
+  {id:'e35',date:'2026-05-16',slot:'evening',name:'(dior 藝廊)',time:'',maps:'https://maps.google.com/?q=Galerie+Dior+Paris',note:''},
+  {id:'e36',date:'2026-05-17',slot:'morning',name:'（春天）老佛爺',time:'',maps:'https://maps.google.com/?q=Galeries+Lafayette+Paris',note:''},
+  {id:'e37',date:'2026-05-17',slot:'morning',name:'瑪黑區（孚日廣場）',time:'',maps:'https://maps.google.com/?q=Place+des+Vosges+Paris',note:''},
+  {id:'e38',date:'2026-05-17',slot:'morning',name:'逛巴士底市集',time:'',maps:'https://maps.google.com/?q=Marche+de+la+Bastille+Paris',note:'週日早上開'},
+  {id:'e39',date:'2026-05-17',slot:'morning',name:'兩果之家',time:'',maps:'https://maps.google.com/?q=La+Maison+de+Victor+Hugo+Paris',note:''},
+  {id:'e40',date:'2026-05-17',slot:'afternoon',name:'卡納瓦雷博物館',time:'',maps:'https://maps.google.com/?q=Musee+Carnavalet+Paris',note:''},
+  {id:'e41',date:'2026-05-17',slot:'afternoon',name:'戰神廣場',time:'',maps:'https://maps.google.com/?q=Champ+de+Mars+Paris',note:''},
+  {id:'e42',date:'2026-05-17',slot:'afternoon',name:'畢卡索美術館',time:'',maps:'https://maps.google.com/?q=Musee+Picasso+Paris',note:''},
+  {id:'e43',date:'2026-05-17',slot:'evening',name:'Merci',time:'',maps:'https://maps.google.com/?q=Merci+Paris',note:''},
+  {id:'e44',date:'2026-05-18',slot:'morning',name:'（巴黎聖母院 瀰散）',time:'',maps:'https://maps.google.com/?q=Notre+Dame+Cathedral+Paris',note:''},
+  {id:'e45',date:'2026-05-18',slot:'morning',name:'換飯店',time:'',maps:'',note:''},
+  {id:'e46',date:'2026-05-18',slot:'morning',name:'協和廣場',time:'',maps:'https://maps.google.com/?q=Place+de+la+Concorde+Paris',note:''},
+  {id:'e47',date:'2026-05-18',slot:'afternoon',name:'橘園美術館',time:'13:00',maps:'https://maps.google.com/?q=Musee+de+l+Orangerie+Paris',note:'PMP 第6天'},
+  {id:'e48',date:'2026-05-18',slot:'afternoon',name:'海軍府',time:'15:00',maps:'https://maps.google.com/?q=Hotel+de+la+Marine+Paris',note:''},
+  {id:'e49',date:'2026-05-18',slot:'evening',name:'塞納河遊',time:'',maps:'https://maps.google.com/?q=Seine+River+Cruise+Paris',note:''},
+  {id:'e50',date:'2026-05-18',slot:'evening',name:'Margaux 晚餐',time:'21:00',maps:'https://maps.google.com/?q=Restaurant+Margaux+Paris',note:''},
+  {id:'e51',date:'2026-05-18',slot:'note',name:'Hotel Acropole',time:'',maps:'https://maps.google.com/?q=Hotel+Acropole+199+Boulevard+Brune+75014+Paris',note:'199 Boulevard Brune, 75014 Paris'},
+  {id:'e52',date:'2026-05-19',slot:'morning',name:'迪士尼',time:'',maps:'https://maps.google.com/?q=Disneyland+Paris',note:''},
+  {id:'e53',date:'2026-05-20',slot:'morning',name:'日內瓦',time:'',maps:'https://maps.google.com/?q=Geneva+Switzerland',note:''},
+  {id:'e55',date:'2026-05-21',slot:'morning',name:'白朗峰',time:'',maps:'https://maps.google.com/?q=Mont+Blanc+Chamonix',note:''},
+  {id:'e56',date:'2026-05-21',slot:'morning',name:'霞慕尼',time:'',maps:'https://maps.google.com/?q=Chamonix+France',note:''},
+  {id:'e57',date:'2026-05-21',slot:'evening',name:'霞慕尼（住）',time:'',maps:'https://maps.google.com/?q=Chamonix+France',note:''},
+  {id:'e58',date:'2026-05-22',slot:'morning',name:'露慕尼',time:'',maps:'',note:''},
+  {id:'e59',date:'2026-05-22',slot:'morning',name:'回巴黎',time:'',maps:'https://maps.google.com/?q=Paris+France',note:''},
+  {id:'e60',date:'2026-05-22',slot:'evening',name:'傷兵院燈光秀',time:'22:00',maps:'https://maps.google.com/?q=Les+Invalides+Paris',note:''},
+  {id:'e61',date:'2026-05-23',slot:'morning',name:'（皮諾私人美術館）',time:'',maps:'https://maps.google.com/?q=Bourse+de+Commerce+Pinault',note:''},
+  {id:'e62',date:'2026-05-23',slot:'morning',name:'微微安拱廊（拱廊街×3）',time:'',maps:'https://maps.google.com/?q=Galerie+Vivienne+Paris',note:''},
+  {id:'e63',date:'2026-05-23',slot:'afternoon',name:'（逛街日）Jelly Cat',time:'',maps:'https://maps.google.com/?q=Jellycat+Paris',note:''},
+  {id:'e64',date:'2026-05-23',slot:'note',name:'Terminus Orleans Hotel',time:'',maps:'https://maps.google.com/?q=197+Boulevard+Brune+75014+Paris',note:'197 Boulevard Brune, 75014 Paris'},
+  {id:'e65',date:'2026-05-24',slot:'morning',name:'La Vallée Village',time:'',maps:'https://maps.google.com/?q=La+Vallee+Village+Serris',note:''},
+  {id:'e66',date:'2026-05-25',slot:'morning',name:'辦理退稅（PABLO 機器）',time:'',maps:'',note:''},
+  {id:'e67',date:'2026-05-25',slot:'morning',name:'11:20 BR88 巴黎一航',time:'11:20',maps:'https://maps.google.com/?q=Charles+de+Gaulle+Airport+Paris',note:'飛機返台'},
+  {id:'e68',date:'2026-05-25',slot:'evening',name:'機上供餐',time:'',maps:'',note:''},
+];
+const seedTickets=[
+  {id:'t1',name:'羅浮宮 Musée du Louvre',date:'2026-05-14',time:'14:00',people:2,status:'confirmed',ref:'LVR-2026-0514',note:'有租導覽，入口 Richelieu',qr:''},
+  {id:'t2',name:'巴黎聖母院 Notre-Dame',date:'2026-05-16',time:'10:45',people:2,status:'confirmed',ref:'ND-2026-0516',note:'需提早到達',qr:''},
+  {id:'t3',name:'凡爾賽宮 Versailles',date:'2026-05-13',time:'09:00',people:2,status:'confirmed',ref:'VSL-2026-0513',note:'',qr:''},
+  {id:'t4',name:'橘園美術館 Orangerie',date:'2026-05-18',time:'13:00',people:2,status:'pending',ref:'',note:'PMP 第6天',qr:''},
+];
+const seedExpenses=[
+  {id:'x1',date:'2026-05-14',name:'羅浮宮門票 + 導覽',cat:'景點',cardEur:38,cashEur:0,note:'2人'},
+  {id:'x2',date:'2026-05-13',name:'凡爾賽宮門票',cat:'景點',cardEur:30,cashEur:0,note:'2人'},
+  {id:'x3',date:'2026-05-12',name:'地鐵票 10日券',cat:'交通',cardEur:0,cashEur:42,note:''},
+  {id:'x4',date:'2026-05-18',name:'PMP 博物館通票',cat:'景點',cardEur:88,cashEur:0,note:'€88≈NT$4404'},
+  {id:'x5',date:'2026-05-11',name:'巴黎小麻坊住宿',cat:'住宿',cardEur:180,cashEur:0,note:''},
+];
+
+// ══════════════════════════════════════
+//  FIREBASE SYNC
+// ══════════════════════════════════════
+function setSyncStatus(status, msg) {
+  const bar=document.getElementById('sync-bar');
+  const msgEl=document.getElementById('sync-msg');
+  bar.className=''; bar.classList.add(status);
+  msgEl.textContent=msg;
+}
+
+async function initFirebase() {
+  setSyncStatus('','正在連線 Firebase...');
+  try {
+    const data = await fbGet();
+    if(data && (data.events||data.tickets||data.expenses)){
+      state.events  = data.events   ? Object.values(data.events)   : [];
+      state.tickets = data.tickets  ? Object.values(data.tickets)  : [];
+      state.expenses= data.expenses ? Object.values(data.expenses) : [];
+    } else {
+      state.events=seedEvents; state.tickets=seedTickets; state.expenses=seedExpenses;
+      await pushAllToFirebase();
+    }
+    fbReady=true;
+    setSyncStatus('synced','🌐 已連線 Firebase · 跨裝置同步中');
+    renderCalendar();
+    startPolling();
+  } catch(err) {
+    setSyncStatus('error','⚠ Firebase 連線失敗，使用本機資料');
+    loadLocalState();
+    fbReady=false;
+    renderCalendar();
+  }
+}
+
+async function pushAllToFirebase() {
+  if(!fbReady && state.events.length===0) return;
+  const evObj={},tkObj={},exObj={};
+  state.events.forEach(e=>evObj[e.id]=e);
+  state.tickets.forEach(t=>tkObj[t.id]=t);
+  state.expenses.forEach(x=>exObj[x.id]=x);
+  try {
+    await fbSet('', {events:evObj,tickets:tkObj,expenses:exObj});
+    setSyncStatus('synced','🌐 已同步 · '+new Date().toLocaleTimeString('zh-TW'));
+  } catch(e) {
+    setSyncStatus('error','⚠ 同步失敗，請檢查網路');
+  }
+}
+
+function saveState(){
+  localStorage.setItem('paris2026fb',JSON.stringify(state));
+  if(fbReady){
+    setSyncStatus('synced','正在同步...');
+    pushAllToFirebase();
+  }
+}
+
+function loadLocalState(){
+  try{
+    const s=localStorage.getItem('paris2026fb');
+    if(s){state=JSON.parse(s);}
+    else{state.events=seedEvents;state.tickets=seedTickets;state.expenses=seedExpenses;}
+  }catch(e){state.events=seedEvents;state.tickets=seedTickets;state.expenses=seedExpenses;}
+}
+
+// ══════════════════════════════════════
+//  TABS
+// ══════════════════════════════════════
+function showTab(tab,btn){
+  document.querySelectorAll('.tab-section').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('tab-'+tab).classList.add('active');
+  if(btn)btn.classList.add('active');
+  closePanel();
+  if(tab==='tickets')renderTickets();
+  if(tab==='expenses')renderExpenses();
+}
+function switchView(v){
+  currentView=v;
+  document.getElementById('view-cal').style.display=v==='cal'?'':'none';
+  document.getElementById('view-list').style.display=v==='list'?'':'none';
+  document.getElementById('vbtn-cal').classList.toggle('active',v==='cal');
+  document.getElementById('vbtn-list').classList.toggle('active',v==='list');
+  if(v==='list')renderListView();
+}
+
+// ══════════════════════════════════════
+//  CALENDAR
+// ══════════════════════════════════════
+const DAYS=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+const MONTHS=['January','February','March','April','May','June','July','August','September','October','November','December'];
+const MN=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+function prevMonth(){calMonth--;if(calMonth<0){calMonth=11;calYear--;}renderCalendar();}
+function nextMonth(){calMonth++;if(calMonth>11){calMonth=0;calYear++;}renderCalendar();}
+
+function renderCalendar(){
+  document.getElementById('cal-month-label').textContent=`${MONTHS[calMonth]} ${calYear}`;
+  document.getElementById('cal-headers').innerHTML=DAYS.map(d=>`<div class="cal-day-header">${d}</div>`).join('');
+  const grid=document.getElementById('cal-grid');grid.innerHTML='';
+  const first=new Date(calYear,calMonth,1).getDay();
+  const days=new Date(calYear,calMonth+1,0).getDate();
+  for(let i=0;i<first;i++){const c=document.createElement('div');c.className='cal-day other-month';c.innerHTML=`<div class="day-num"><span>${new Date(calYear,calMonth,-first+i+1).getDate()}</span></div>`;grid.appendChild(c);}
+  for(let d=1;d<=days;d++){
+    const ds=`${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const date=new Date(calYear,calMonth,d);
+    const isTrip=date>=TRIP_START&&date<=TRIP_END;
+    const evs=state.events.filter(e=>e.date===ds);
+    const c=document.createElement('div');
+    c.className='cal-day'+(isTrip?' trip-day':'')+(evs.length?' has-events':'');
+    let html=`<div class="day-num"><span>${d}</span><span class="day-label">${DAYS[date.getDay()]}</span></div><div class="day-events">`;
+    evs.slice(0,3).forEach(ev=>{const cls=ev.slot==='morning'?'chip-morning':ev.slot==='afternoon'?'chip-afternoon':ev.slot==='evening'?'chip-evening':'chip-note';html+=`<div class="event-chip ${cls}">${ev.name}</div>`;});
+    if(evs.length>3)html+=`<div class="add-more">+${evs.length-3} more</div>`;
+    html+=`</div><button class="day-add-btn" onclick="event.stopPropagation();openEventModal('${ds}')">+</button>`;
+    c.innerHTML=html;c.addEventListener('click',()=>openDayPanel(ds));grid.appendChild(c);
+  }
+  const trail=(first+days)%7===0?0:7-(first+days)%7;
+  for(let i=1;i<=trail;i++){const c=document.createElement('div');c.className='cal-day other-month';c.innerHTML=`<div class="day-num"><span>${i}</span></div>`;grid.appendChild(c);}
+  if(currentView==='list')renderListView();
+}
+
+// LIST VIEW
+function renderListView(){
+  const container=document.getElementById('list-view-content');container.innerHTML='';
+  const tripDays=[];let cur=new Date(TRIP_START);
+  while(cur<=TRIP_END){tripDays.push(cur.toISOString().slice(0,10));cur=new Date(cur.getTime()+86400000);}
+  tripDays.forEach(ds=>{
+    const evs=state.events.filter(e=>e.date===ds);
+    const d=new Date(ds+'T12:00:00');
+    const box=document.createElement('div');box.className='list-day trip-day';box.dataset.date=ds;
+    const preview=evs.filter(e=>e.slot!=='note').slice(0,2).map(ev=>{
+      const cls=ev.slot==='morning'?'chip-morning':ev.slot==='afternoon'?'chip-afternoon':'chip-evening';
+      return `<span class="event-chip ${cls}" style="font-size:.57rem;padding:1px 4px;">${ev.name}</span>`;
+    }).join('');
+    box.innerHTML=`<div class="list-day-header" onclick="toggleListDay(this)"><div class="list-day-left"><div><div class="list-day-date">${MN[d.getMonth()]} ${d.getDate()} <span style="color:var(--gold);font-size:.66rem;">${DAYS[d.getDay()]}</span></div><div class="list-day-chips">${preview}</div></div></div><div class="list-day-right"><span class="list-count">${evs.length} 項</span><span class="list-chevron">›</span></div></div><div class="list-day-body"><div class="list-events" id="list-evs-${ds}"></div><button class="list-add-btn" onclick="openEventModal('${ds}')">＋ 新增行程</button></div>`;
+    container.appendChild(box);
+  });
+}
+function toggleListDay(header){
+  const day=header.closest('.list-day');day.classList.toggle('open');
+  if(day.classList.contains('open'))renderListDayEvents(day.dataset.date);
+}
+function renderListDayEvents(ds){
+  const container=document.getElementById('list-evs-'+ds);if(!container)return;
+  const evs=state.events.filter(e=>e.date===ds);
+  if(!evs.length){container.innerHTML='<div style="font-size:.74rem;color:var(--warm-gray);padding:5px 0;">尚無行程</div>';return;}
+  const order=['morning','afternoon','evening','note'];
+  const lbl={morning:'☀ Morning',afternoon:'🌤 Afternoon',evening:'🌙 Evening',note:'📝 Note'};
+  const dc={morning:'dot-morning',afternoon:'dot-afternoon',evening:'dot-evening',note:'dot-note'};
+  container.innerHTML='';
+  order.forEach(slot=>{
+    const sEvs=evs.filter(e=>e.slot===slot);if(!sEvs.length)return;
+    const h=document.createElement('div');h.style.cssText='font-size:.58rem;text-transform:uppercase;letter-spacing:.1em;color:var(--warm-gray);margin:5px 0 2px;';h.textContent=lbl[slot];container.appendChild(h);
+    sEvs.forEach(ev=>{
+      const el=document.createElement('div');el.className='list-event-item';el.draggable=true;el.dataset.id=ev.id;
+      el.innerHTML=`<div class="drag-handle">⠿</div><div class="event-dot ${dc[slot]}"></div><div class="event-content"><div class="event-name">${ev.maps?`<a href="${ev.maps}" target="_blank" onclick="event.stopPropagation()">📍 ${ev.name}</a>`:ev.name}</div>${ev.time?`<div class="event-time">🕐 ${ev.time}</div>`:''}${ev.note?`<div class="event-note-text">${ev.note}</div>`:''}</div><div class="event-actions"><button class="act-btn" onclick="event.stopPropagation();openEventModal('${ds}','${ev.id}')">✎</button><button class="act-btn del" onclick="event.stopPropagation();deleteEvent('${ev.id}','${ds}')">✕</button></div>`;
+      setupDrag(el,ev.id,ds,'list');container.appendChild(el);
+    });
+  });
+}
+
+// PANEL
+function openDayPanel(ds){
+  currentPanelDate=ds;
+  const d=new Date(ds+'T12:00:00');
+  document.getElementById('panel-date').textContent=d.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});
+  const evs=state.events.filter(e=>e.date===ds);
+  const hotel=evs.find(e=>e.slot==='note'&&(e.name.includes('住宿')||e.name.toLowerCase().includes('hotel')));
+  document.getElementById('panel-hotel').innerHTML=hotel?`<div class="hotel-info"><div class="hotel-label">🏨 住宿</div><div class="hotel-name">${hotel.maps?`<a href="${hotel.maps}" target="_blank">${hotel.name}</a>`:hotel.name}</div>${hotel.note?`<div class="hotel-addr">📍 ${hotel.note}</div>`:''}</div>`:'';
+  renderPanelEvents(ds);
+  document.getElementById('panel-add-btn').onclick=()=>openEventModal(ds);
+  document.getElementById('detail-panel').classList.add('open');
+}
+function renderPanelEvents(ds){
+  const evs=state.events.filter(e=>e.date===ds);
+  const c=document.getElementById('panel-events');
+  if(!evs.length){c.innerHTML='<div class="empty-state"><div class="empty-icon">✦</div><p>尚無行程</p></div>';return;}
+  const order=['morning','afternoon','evening','note'];
+  const lbl={morning:'☀ Morning',afternoon:'🌤 Afternoon',evening:'🌙 Evening',note:'📝 Note'};
+  const dc={morning:'dot-morning',afternoon:'dot-afternoon',evening:'dot-evening',note:'dot-note'};
+  c.innerHTML='';
+  order.forEach(slot=>{
+    const sEvs=evs.filter(e=>e.slot===slot);if(!sEvs.length)return;
+    const h=document.createElement('div');h.style.cssText='font-size:.58rem;text-transform:uppercase;letter-spacing:.1em;color:var(--warm-gray);margin-top:3px;margin-bottom:1px;';h.textContent=lbl[slot];c.appendChild(h);
+    sEvs.forEach(ev=>{
+      const el=document.createElement('div');el.className='event-item';el.draggable=true;el.dataset.id=ev.id;
+      el.innerHTML=`<div class="drag-handle">⠿</div><div class="event-dot ${dc[slot]}"></div><div class="event-content"><div class="event-name">${ev.maps?`<a href="${ev.maps}" target="_blank" onclick="event.stopPropagation()">📍 ${ev.name}</a>`:ev.name}</div>${ev.time?`<div class="event-time">🕐 ${ev.time}</div>`:''}${ev.note?`<div class="event-note-text">${ev.note}</div>`:''}</div><div class="event-actions"><button class="act-btn" onclick="event.stopPropagation();openEventModal('${ds}','${ev.id}')">✎</button><button class="act-btn del" onclick="event.stopPropagation();deleteEvent('${ev.id}','${ds}')">✕</button></div>`;
+      setupDrag(el,ev.id,ds,'panel');c.appendChild(el);
+    });
+  });
+}
+function closePanel(){document.getElementById('detail-panel').classList.remove('open');}
+
+// DRAG
+function setupDrag(el,id,ds,ctx){
+  el.addEventListener('dragstart',()=>{dragId=id;el.classList.add('dragging');});
+  el.addEventListener('dragend',()=>{dragId=null;el.classList.remove('dragging','drag-over');});
+  el.addEventListener('dragover',e=>{e.preventDefault();el.classList.add('drag-over');});
+  el.addEventListener('dragleave',()=>el.classList.remove('drag-over'));
+  el.addEventListener('drop',e=>{
+    e.preventDefault();el.classList.remove('drag-over');
+    if(!dragId||dragId===id)return;
+    const ai=state.events.findIndex(x=>x.id===dragId),bi=state.events.findIndex(x=>x.id===id);
+    const[moved]=state.events.splice(ai,1);state.events.splice(bi,0,moved);
+    saveState();renderCalendar();
+    if(ctx==='panel')renderPanelEvents(ds);
+    if(ctx==='list')renderListDayEvents(ds);
+  });
+}
+
+// EVENT MODAL
+function openEventModal(ds,editId){
+  editingEventId=editId||null;
+  if(editId){
+    const ev=state.events.find(e=>e.id===editId);if(!ev)return;
+    document.getElementById('event-modal-title').textContent='編輯行程';
+    document.getElementById('ev-date').value=ev.date;document.getElementById('ev-slot').value=ev.slot;
+    document.getElementById('ev-name').value=ev.name;document.getElementById('ev-time').value=ev.time||'';
+    document.getElementById('ev-maps').value=ev.maps||'';document.getElementById('ev-note').value=ev.note||'';
+  }else{
+    document.getElementById('event-modal-title').textContent='新增行程';
+    document.getElementById('ev-date').value=ds||'';document.getElementById('ev-slot').value='morning';
+    ['ev-name','ev-time','ev-maps','ev-note'].forEach(id=>document.getElementById(id).value='');
+  }
+  document.getElementById('event-modal').classList.add('open');
+}
+function closeEventModal(){document.getElementById('event-modal').classList.remove('open');}
+function saveEvent(){
+  const date=document.getElementById('ev-date').value,name=document.getElementById('ev-name').value.trim();
+  if(!date||!name){showToast('請填寫日期和名稱');return;}
+  const data={date,slot:document.getElementById('ev-slot').value,name,time:document.getElementById('ev-time').value,maps:document.getElementById('ev-maps').value,note:document.getElementById('ev-note').value};
+  if(editingEventId){const ev=state.events.find(e=>e.id===editingEventId);if(ev)Object.assign(ev,data);}
+  else state.events.push({id:'e'+Date.now(),...data});
+  saveState();closeEventModal();renderCalendar();
+  if(currentPanelDate)renderPanelEvents(currentPanelDate);
+  if(currentView==='list')renderListView();
+  showToast(editingEventId?'已更新':'已新增');
+}
+function deleteEvent(id,ds){
+  if(!confirm('刪除此行程？'))return;
+  state.events=state.events.filter(e=>e.id!==id);
+  saveState();renderCalendar();
+  if(ds){renderPanelEvents(ds);renderListDayEvents(ds);}
+  showToast('已刪除');
+}
+
+// TICKETS
+function renderTickets(){
+  const grid=document.getElementById('tickets-grid');grid.innerHTML='';
+  state.tickets.forEach(tk=>{
+    const sl=tk.status==='confirmed'?'✅ 已確認':tk.status==='used'?'✔ 已使用':'⏳ 待確認';
+    const sc=tk.status==='confirmed'?'badge-confirmed':tk.status==='used'?'badge-used':'badge-pending';
+    const card=document.createElement('div');card.className=`ticket-card status-${tk.status}`;
+    card.innerHTML=`<div class="ticket-status-badge ${sc}">${sl}</div><div class="ticket-name">${tk.name}</div><div class="ticket-meta"><span>📅 ${tk.date}${tk.time?' · '+tk.time:''}</span><span>👥 ${tk.people} 人</span>${tk.ref?`<span>🔖 ${tk.ref}</span>`:''}${tk.note?`<span>📝 ${tk.note}</span>`:''}</div><div class="qr-area" onclick="event.stopPropagation();${tk.qr?`openQrLightbox('${tk.id}')`:''}" style="${!tk.qr?'cursor:default':''}">${tk.qr?`<img src="${tk.qr}" alt="QR">`:`<div class="qr-placeholder"><span class="qr-icon">⬛</span>尚未上傳 QR Code</div>`}</div><div class="ticket-actions"><button class="t-btn" onclick="openTicketModal('${tk.id}')">✎ 編輯</button><button class="t-btn" onclick="uploadQr('${tk.id}')">⬆ QR</button><button class="t-btn danger" onclick="deleteTicket('${tk.id}')">✕</button></div>`;
+    grid.appendChild(card);
+  });
+}
+function openTicketModal(editId){
+  editingTicketId=editId||null;tempQrData=null;
+  document.getElementById('qr-preview').style.display='none';document.getElementById('qr-placeholder').style.display='block';
+  if(editId){
+    const tk=state.tickets.find(t=>t.id===editId);if(!tk)return;
+    document.getElementById('tk-name').value=tk.name;document.getElementById('tk-date').value=tk.date;
+    document.getElementById('tk-time').value=tk.time||'';document.getElementById('tk-people').value=tk.people;
+    document.getElementById('tk-status').value=tk.status;document.getElementById('tk-ref').value=tk.ref||'';
+    document.getElementById('tk-note').value=tk.note||'';
+    if(tk.qr){document.getElementById('qr-preview').src=tk.qr;document.getElementById('qr-preview').style.display='block';document.getElementById('qr-placeholder').style.display='none';}
+  }else{
+    ['tk-name','tk-date','tk-time','tk-ref','tk-note'].forEach(id=>document.getElementById(id).value='');
+    document.getElementById('tk-people').value=2;document.getElementById('tk-status').value='pending';
+  }
+  document.getElementById('ticket-modal').classList.add('open');
+}
+function closeTicketModal(){document.getElementById('ticket-modal').classList.remove('open');}
+function saveTicket(){
+  const name=document.getElementById('tk-name').value.trim(),date=document.getElementById('tk-date').value;
+  if(!name||!date){showToast('請填寫名稱和日期');return;}
+  const data={name,date,time:document.getElementById('tk-time').value,people:+document.getElementById('tk-people').value,status:document.getElementById('tk-status').value,ref:document.getElementById('tk-ref').value,note:document.getElementById('tk-note').value};
+  if(tempQrData)data.qr=tempQrData;
+  if(editingTicketId){const tk=state.tickets.find(t=>t.id===editingTicketId);if(tk)Object.assign(tk,data);}
+  else state.tickets.push({id:'t'+Date.now(),qr:'',...data});
+  saveState();closeTicketModal();renderTickets();showToast(editingTicketId?'已更新':'已新增');
+}
+function deleteTicket(id){if(!confirm('刪除？'))return;state.tickets=state.tickets.filter(t=>t.id!==id);saveState();renderTickets();showToast('已刪除');}
+function uploadQr(id){
+  const inp=document.createElement('input');inp.type='file';inp.accept='image/*';
+  inp.onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=x=>{const tk=state.tickets.find(t=>t.id===id);if(tk){tk.qr=x.target.result;saveState();renderTickets();showToast('QR Code 已上傳');}};r.readAsDataURL(f);};inp.click();
+}
+function handleQrFile(e){const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=x=>{tempQrData=x.target.result;document.getElementById('qr-preview').src=tempQrData;document.getElementById('qr-preview').style.display='block';document.getElementById('qr-placeholder').style.display='none';};r.readAsDataURL(f);}
+function handleQrDrop(e){const f=e.dataTransfer.files[0];if(!f||!f.type.startsWith('image/'))return;const r=new FileReader();r.onload=x=>{tempQrData=x.target.result;document.getElementById('qr-preview').src=tempQrData;document.getElementById('qr-preview').style.display='block';document.getElementById('qr-placeholder').style.display='none';};r.readAsDataURL(f);}
+function openQrLightbox(id){const tk=state.tickets.find(t=>t.id===id);if(!tk||!tk.qr)return;document.getElementById('qr-lightbox-img').src=tk.qr;document.getElementById('qr-lightbox').classList.add('open');}
+function closeQrLightbox(){document.getElementById('qr-lightbox').classList.remove('open');}
+
+// EXPENSES
+const CAT_META={'機票':{cls:'cat-flight',color:'#4A6FA5',icon:'✈'},'住宿':{cls:'cat-hotel',color:'#8C7B6B',icon:'🏨'},'景點':{cls:'cat-sight',color:'#C9A84C',icon:'🎫'},'交通':{cls:'cat-transport',color:'#5aa0b4',icon:'🚇'},'餐飲':{cls:'cat-food',color:'#7A9E87',icon:'🍽'},'購物':{cls:'cat-shopping',color:'#C4776A',icon:'🛍'},'其他':{cls:'cat-other',color:'#999',icon:'•'}};
+function getRate(){return parseFloat(document.getElementById('exch-rate').value)||35;}
+function syncPay(field){
+  const rate=getRate();
+  if(field==='card-eur'){const v=parseFloat(document.getElementById('exp-card-eur').value)||0;document.getElementById('exp-card-twd').value=v?Math.round(v*rate):'';}
+  else if(field==='card-twd'){const v=parseFloat(document.getElementById('exp-card-twd').value)||0;document.getElementById('exp-card-eur').value=v?(v/rate).toFixed(2):'';}
+  else if(field==='cash-eur'){const v=parseFloat(document.getElementById('exp-cash-eur').value)||0;document.getElementById('exp-cash-twd').value=v?Math.round(v*rate):'';}
+  else if(field==='cash-twd'){const v=parseFloat(document.getElementById('exp-cash-twd').value)||0;document.getElementById('exp-cash-eur').value=v?(v/rate).toFixed(2):'';}
+  updateExpTotal();
+}
+function updateExpTotal(){
+  const rate=getRate(),card=parseFloat(document.getElementById('exp-card-eur').value)||0,cash=parseFloat(document.getElementById('exp-cash-eur').value)||0,total=card+cash;
+  document.getElementById('exp-total-display').textContent=`€ ${total.toFixed(2)}  ≈ NT$ ${Math.round(total*rate).toLocaleString()}`;
+}
+function renderExpenses(){
+  const catF=document.getElementById('expense-filter-cat').value,payF=document.getElementById('expense-filter-pay').value;
+  const dayS=document.getElementById('expense-filter-day'),curDay=dayS.value;
+  const allDates=[...new Set(state.expenses.map(e=>e.date))].sort();
+  dayS.innerHTML='<option value="">所有日期</option>'+allDates.map(d=>`<option value="${d}"${d===curDay?' selected':''}>${d}</option>`).join('');
+  let exps=state.expenses;
+  if(catF)exps=exps.filter(e=>e.cat===catF);
+  if(payF==='card')exps=exps.filter(e=>(e.cardEur||0)>0&&(e.cashEur||0)===0);
+  else if(payF==='cash')exps=exps.filter(e=>(e.cashEur||0)>0&&(e.cardEur||0)===0);
+  else if(payF==='mix')exps=exps.filter(e=>(e.cardEur||0)>0&&(e.cashEur||0)>0);
+  if(curDay)exps=exps.filter(e=>e.date===curDay);
+  exps.sort((a,b)=>a.date.localeCompare(b.date));
+  const rate=getRate();
+  document.getElementById('expense-tbody').innerHTML=exps.map(ex=>{
+    const card=ex.cardEur||0,cash=ex.cashEur||0,total=card+cash;
+    const payType=card>0&&cash>0?'mix':card>0?'card':'cash';
+    const payLabel={'card':'💳 刷卡','cash':'💵 現金','mix':'🔀 混合'}[payType];
+    const meta=CAT_META[ex.cat]||CAT_META['其他'];
+    return `<tr><td style="font-family:'DM Mono',monospace;font-size:.72rem;">${ex.date}</td><td>${ex.name}${ex.note?`<br><span style="font-size:.64rem;color:var(--warm-gray)">${ex.note}</span>`:''}</td><td><span class="cat-badge ${meta.cls}">${meta.icon} ${ex.cat}</span></td><td><span class="pay-badge pay-${payType}">${payLabel}</span></td><td><span class="amount-eur" style="color:var(--blue)">${card>0?'€'+card.toFixed(2):'—'}</span></td><td><span class="amount-eur" style="color:#3d7a55">${cash>0?'€'+cash.toFixed(2):'—'}</span></td><td><span class="amount-eur">€ ${total.toFixed(2)}</span></td><td><span class="amount-twd">NT$ ${Math.round(total*rate).toLocaleString()}</span></td><td><button class="act-btn" onclick="openExpenseModal('${ex.id}')">✎</button><button class="act-btn del" onclick="deleteExpense('${ex.id}')">✕</button></td></tr>`;
+  }).join('')||'<tr><td colspan="9" style="text-align:center;color:var(--warm-gray);padding:18px;">尚無記錄</td></tr>';
+  renderSummary();
+}
+function renderSummary(){
+  const rate=getRate();let totalCard=0,totalCash=0;
+  state.expenses.forEach(e=>{totalCard+=(e.cardEur||0);totalCash+=(e.cashEur||0);});
+  const total=totalCard+totalCash;
+  document.getElementById('sum-card-eur').textContent=`€ ${totalCard.toFixed(2)}`;
+  document.getElementById('sum-card-twd').textContent=`NT$ ${Math.round(totalCard*rate).toLocaleString()}`;
+  document.getElementById('sum-cash-eur').textContent=`€ ${totalCash.toFixed(2)}`;
+  document.getElementById('sum-cash-twd').textContent=`NT$ ${Math.round(totalCash*rate).toLocaleString()}`;
+  document.getElementById('sum-total-eur').textContent=`€ ${total.toFixed(2)}`;
+  document.getElementById('sum-total-twd').textContent=`NT$ ${Math.round(total*rate).toLocaleString()}`;
+  const cats={};
+  state.expenses.forEach(e=>{const card=e.cardEur||0,cash=e.cashEur||0;if(!cats[e.cat])cats[e.cat]={total:0,card:0,cash:0};cats[e.cat].total+=card+cash;cats[e.cat].card+=card;cats[e.cat].cash+=cash;});
+  const sorted=Object.entries(cats).sort((a,b)=>b[1].total-a[1].total),max=sorted[0]?.[1].total||1;
+  document.getElementById('bar-chart-content').innerHTML=sorted.map(([cat,v])=>{
+    const meta=CAT_META[cat]||CAT_META['其他'],cp=(v.card/max*100).toFixed(1),cashp=(v.cash/max*100).toFixed(1);
+    return `<div class="bar-row"><div class="bar-top"><div class="bar-label">${meta.icon} ${cat}</div><div class="bar-amounts">${v.card>0?`<span style="color:var(--blue)">💳€${v.card.toFixed(0)}</span>`:''}${v.cash>0?`<span style="color:#3d7a55">💵€${v.cash.toFixed(0)}</span>`:''}<span>= €${v.total.toFixed(0)}</span></div></div><div class="bar-track"><div class="bar-stack"><div class="bar-card-fill" style="width:${cp}%"></div><div class="bar-cash-fill" style="width:${cashp}%"></div></div></div></div>`;
+  }).join('');
+}
+function openExpenseModal(editId){
+  editingExpenseId=editId||null;
+  const clear=()=>{['exp-name','exp-note'].forEach(id=>document.getElementById(id).value='');document.getElementById('exp-date').value='';document.getElementById('exp-cat').value='餐飲';['exp-card-eur','exp-card-twd','exp-cash-eur','exp-cash-twd'].forEach(id=>document.getElementById(id).value='');document.getElementById('exp-total-display').textContent='€ 0.00';};
+  if(editId){
+    const ex=state.expenses.find(e=>e.id===editId);if(!ex)return;
+    document.getElementById('exp-name').value=ex.name;document.getElementById('exp-date').value=ex.date;
+    document.getElementById('exp-cat').value=ex.cat;document.getElementById('exp-note').value=ex.note||'';
+    const rate=getRate();
+    document.getElementById('exp-card-eur').value=ex.cardEur||'';document.getElementById('exp-card-twd').value=ex.cardEur?Math.round(ex.cardEur*rate):'';
+    document.getElementById('exp-cash-eur').value=ex.cashEur||'';document.getElementById('exp-cash-twd').value=ex.cashEur?Math.round(ex.cashEur*rate):'';
+    updateExpTotal();
+  }else{clear();}
+  document.getElementById('expense-modal').classList.add('open');
+}
+function closeExpenseModal(){document.getElementById('expense-modal').classList.remove('open');}
+function saveExpense(){
+  const name=document.getElementById('exp-name').value.trim(),date=document.getElementById('exp-date').value;
+  const cardEur=parseFloat(document.getElementById('exp-card-eur').value)||0,cashEur=parseFloat(document.getElementById('exp-cash-eur').value)||0;
+  if(!name||!date){showToast('請填寫項目和日期');return;}
+  if(!cardEur&&!cashEur){showToast('請填寫刷卡或現金金額');return;}
+  const data={name,date,cat:document.getElementById('exp-cat').value,cardEur,cashEur,note:document.getElementById('exp-note').value};
+  if(editingExpenseId){const ex=state.expenses.find(e=>e.id===editingExpenseId);if(ex)Object.assign(ex,data);}
+  else state.expenses.push({id:'x'+Date.now(),...data});
+  saveState();closeExpenseModal();renderExpenses();showToast(editingExpenseId?'已更新':'已新增');
+}
+function deleteExpense(id){if(!confirm('刪除？'))return;state.expenses=state.expenses.filter(e=>e.id!==id);saveState();renderExpenses();showToast('已刪除');}
+
+// ══════════════════════════════════════
+//  EXCEL EXPORT (SheetJS)
+// ══════════════════════════════════════
+function exportExpenses(){
+  const rate=getRate();
+  const rows=[['日期','項目','分類','付款方式','刷卡(€)','現金(€)','總額(€)','總額(NT$)','備注']];
+  state.expenses.sort((a,b)=>a.date.localeCompare(b.date)).forEach(ex=>{
+    const card=ex.cardEur||0,cash=ex.cashEur||0,total=card+cash;
+    const pay=card>0&&cash>0?'混合':card>0?'刷卡':'現金';
+    rows.push([ex.date,ex.name,ex.cat,pay,card||'',cash||'',total,Math.round(total*rate),ex.note||'']);
+  });
+  // Summary rows
+  rows.push([]);rows.push(['── 分類統計 ──']);
+  rows.push(['分類','刷卡(€)','現金(€)','總額(€)','總額(NT$)']);
+  const cats={};
+  state.expenses.forEach(e=>{if(!cats[e.cat])cats[e.cat]={card:0,cash:0};cats[e.cat].card+=(e.cardEur||0);cats[e.cat].cash+=(e.cashEur||0);});
+  Object.entries(cats).sort((a,b)=>b[1].card+b[1].cash-(a[1].card+a[1].cash)).forEach(([cat,v])=>{
+    const total=v.card+v.cash;rows.push([cat,v.card.toFixed(2),v.cash.toFixed(2),total.toFixed(2),Math.round(total*rate)]);
+  });
+  const totalCard=state.expenses.reduce((s,e)=>s+(e.cardEur||0),0);
+  const totalCash=state.expenses.reduce((s,e)=>s+(e.cashEur||0),0);
+  const grandTotal=totalCard+totalCash;
+  rows.push(['合計',totalCard.toFixed(2),totalCash.toFixed(2),grandTotal.toFixed(2),Math.round(grandTotal*rate)]);
+  downloadSheet(rows,'花費記錄','Paris2026_花費');
+}
+
+function exportItinerary(){
+  const rows=[['日期','星期','時段','景點/行程','時間','備注','Google Maps']];
+  const slotName={morning:'早上',afternoon:'下午',evening:'晚上',note:'備注'};
+  const tripDays=[];let cur=new Date(TRIP_START);
+  while(cur<=TRIP_END){tripDays.push(cur.toISOString().slice(0,10));cur=new Date(cur.getTime()+86400000);}
+  const dowCN=['日','一','二','三','四','五','六'];
+  tripDays.forEach(ds=>{
+    const evs=state.events.filter(e=>e.date===ds);
+    const d=new Date(ds+'T12:00:00');
+    if(evs.length===0){rows.push([ds,'(週'+dowCN[d.getDay()]+')','-','（無行程）','','','']);}
+    else{evs.forEach(ev=>rows.push([ds,'(週'+dowCN[d.getDay()]+')',slotName[ev.slot]||ev.slot,ev.name,ev.time||'',ev.note||'',ev.maps||'']));}
+  });
+  downloadSheet(rows,'行程表','Paris2026_行程');
+}
+
+function exportTickets(){
+  const rows=[['景點名稱','日期','時間','人數','狀態','預約號碼','備注']];
+  const statusName={confirmed:'已確認',pending:'待確認',used:'已使用'};
+  state.tickets.forEach(tk=>rows.push([tk.name,tk.date,tk.time||'',tk.people,statusName[tk.status]||tk.status,tk.ref||'',tk.note||'']));
+  downloadSheet(rows,'預約紀錄','Paris2026_預約');
+}
+
+function exportSummary(){
+  const rate=getRate();
+  const totalCard=state.expenses.reduce((s,e)=>s+(e.cardEur||0),0);
+  const totalCash=state.expenses.reduce((s,e)=>s+(e.cashEur||0),0);
+  const grandTotal=totalCard+totalCash;
+  const cats={};
+  state.expenses.forEach(e=>{if(!cats[e.cat])cats[e.cat]={card:0,cash:0};cats[e.cat].card+=(e.cardEur||0);cats[e.cat].cash+=(e.cashEur||0);});
+  const rows=[
+    ['Paris 2026 旅遊總結'],[''],
+    ['行程期間','2026/05/10 – 2026/05/25'],
+    ['總天數','16 天'],[''],
+    ['── 花費總覽 ──'],
+    ['','刷卡(€)','現金(€)','總額(€)','總額(NT$)'],
+    ['合計',totalCard.toFixed(2),totalCash.toFixed(2),grandTotal.toFixed(2),Math.round(grandTotal*rate)],[''],
+    ['── 各分類支出 ──'],
+    ['分類','刷卡(€)','現金(€)','總額(€)','總額(NT$)','佔比'],
+  ];
+  Object.entries(cats).sort((a,b)=>b[1].card+b[1].cash-(a[1].card+a[1].cash)).forEach(([cat,v])=>{
+    const total=v.card+v.cash,pct=grandTotal>0?(total/grandTotal*100).toFixed(1)+'%':'—';
+    rows.push([cat,v.card.toFixed(2),v.cash.toFixed(2),total.toFixed(2),Math.round(total*rate),pct]);
+  });
+  rows.push([''],['── 預約狀態 ──'],['景點','狀態','日期','預約號碼']);
+  state.tickets.forEach(tk=>rows.push([tk.name,tk.status==='confirmed'?'✅已確認':tk.status==='used'?'✔已使用':'⏳待確認',tk.date,tk.ref||'']));
+  downloadSheet(rows,'旅遊總結','Paris2026_總結');
+}
+
+function exportAll(){
+  const rate=getRate();
+  const wb=XLSX.utils.book_new();
+  // Sheet 1: Expenses
+  const expRows=[['日期','項目','分類','付款','刷卡€','現金€','總額€','NT$','備注']];
+  state.expenses.sort((a,b)=>a.date.localeCompare(b.date)).forEach(ex=>{
+    const card=ex.cardEur||0,cash=ex.cashEur||0,total=card+cash;
+    expRows.push([ex.date,ex.name,ex.cat,card>0&&cash>0?'混合':card>0?'刷卡':'現金',card||'',cash||'',total,Math.round(total*rate),ex.note||'']);
+  });
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(expRows),'花費明細');
+  // Sheet 2: Itinerary
+  const iRows=[['日期','時段','景點','時間','備注','Maps']];
+  const tripDays=[];let cur=new Date(TRIP_START);
+  while(cur<=TRIP_END){tripDays.push(cur.toISOString().slice(0,10));cur=new Date(cur.getTime()+86400000);}
+  const slotN={morning:'早上',afternoon:'下午',evening:'晚上',note:'備注'};
+  tripDays.forEach(ds=>state.events.filter(e=>e.date===ds).forEach(ev=>iRows.push([ds,slotN[ev.slot]||ev.slot,ev.name,ev.time||'',ev.note||'',ev.maps||''])));
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(iRows),'行程表');
+  // Sheet 3: Tickets
+  const tkRows=[['景點','日期','時間','人數','狀態','預約號碼','備注']];
+  state.tickets.forEach(tk=>tkRows.push([tk.name,tk.date,tk.time||'',tk.people,tk.status==='confirmed'?'已確認':tk.status==='used'?'已使用':'待確認',tk.ref||'',tk.note||'']));
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(tkRows),'預約紀錄');
+  // Sheet 4: Summary
+  const totalCard=state.expenses.reduce((s,e)=>s+(e.cardEur||0),0);
+  const totalCash=state.expenses.reduce((s,e)=>s+(e.cashEur||0),0);
+  const grandTotal=totalCard+totalCash;
+  const cats={};
+  state.expenses.forEach(e=>{if(!cats[e.cat])cats[e.cat]={card:0,cash:0};cats[e.cat].card+=(e.cardEur||0);cats[e.cat].cash+=(e.cashEur||0);});
+  const sumRows=[['分類統計'],[''],['分類','刷卡€','現金€','總額€','NT$','佔比']];
+  Object.entries(cats).sort((a,b)=>b[1].card+b[1].cash-(a[1].card+a[1].cash)).forEach(([cat,v])=>{
+    const total=v.card+v.cash;sumRows.push([cat,v.card.toFixed(2),v.cash.toFixed(2),total.toFixed(2),Math.round(total*rate),(grandTotal>0?total/grandTotal*100:0).toFixed(1)+'%']);
+  });
+  sumRows.push(['合計',totalCard.toFixed(2),totalCash.toFixed(2),grandTotal.toFixed(2),Math.round(grandTotal*rate),'100%']);
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(sumRows),'分類統計');
+  XLSX.writeFile(wb,'Paris2026_旅遊紀錄.xlsx');
+  showToast('已匯出 Paris2026_旅遊紀錄.xlsx');
+}
+
+function downloadSheet(rows,sheetName,fileName){
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(rows),sheetName);
+  XLSX.writeFile(wb,fileName+'.xlsx');
+  showToast('已匯出 '+fileName+'.xlsx');
+}
+
+function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500);}
+document.querySelectorAll('.modal-overlay').forEach(o=>o.addEventListener('click',e=>{if(e.target===o)o.classList.remove('open');}));
+
+// ══════════════════════════════════════
+//  INIT
+// ══════════════════════════════════════
+initFirebase();
+</script>
+</body>
+</html>
