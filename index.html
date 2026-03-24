@@ -22,7 +22,7 @@
   #sync-bar.error .sync-dot{background:var(--rose);}
   @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
 
-  header{background:var(--dark);color:var(--cream);padding:16px 28px;position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--gold);}
+  header{background:var(--dark);color:var(--cream);padding:16px 28px;position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--gold);overflow:hidden;}
   .header-left h1{font-family:'Playfair Display',serif;font-size:1.4rem;letter-spacing:.02em;}
   .header-left h1 span{color:var(--gold);font-style:italic;}
   .header-left p{font-size:.66rem;color:var(--gold-light);letter-spacing:.12em;text-transform:uppercase;margin-top:2px;}
@@ -236,10 +236,6 @@
   .pay-total-row{margin-top:9px;padding-top:7px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
   .pay-total-label{font-size:.66rem;text-transform:uppercase;letter-spacing:.07em;color:var(--warm-gray);}
   .pay-total-val{font-family:'DM Mono',monospace;font-size:.98rem;font-weight:500;color:var(--dark);}
-  .qr-lightbox{position:fixed;inset:0;background:rgba(26,20,16,.88);z-index:600;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .2s;}
-  .qr-lightbox.open{opacity:1;pointer-events:all;}
-  .qr-lightbox img{max-width:280px;max-height:280px;border-radius:12px;}
-  .qr-lightbox-close{position:absolute;top:20px;right:22px;background:none;border:1px solid rgba(255,255,255,.3);color:white;width:32px;height:32px;border-radius:50%;font-size:1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;}
   .empty-state{text-align:center;padding:32px 20px;color:var(--warm-gray);}
   .empty-icon{font-size:1.9rem;margin-bottom:6px;}
   .empty-state p{font-size:.8rem;}
@@ -256,6 +252,15 @@
 </div>
 
 <header>
+  <!-- Eiffel Tower decorative SVG -->
+  <svg viewBox="0 0 80 120" style="position:absolute;right:320px;top:0;height:100%;opacity:.07;pointer-events:none;" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M40 2 L28 40 L20 40 L18 48 L28 48 L22 80 L14 80 L12 88 L30 88 L28 110 L36 110 L36 120 L44 120 L44 110 L52 110 L50 88 L68 88 L66 80 L58 80 L52 48 L62 48 L60 40 L52 40 Z" fill="white"/>
+    <path d="M26 40 L40 2 L54 40" stroke="white" stroke-width="1.5" fill="none"/>
+    <path d="M22 80 L40 48 L58 80" stroke="white" stroke-width="1.5" fill="none"/>
+    <line x1="20" y1="56" x2="60" y2="56" stroke="white" stroke-width="1"/>
+    <line x1="18" y1="64" x2="62" y2="64" stroke="white" stroke-width="1"/>
+    <line x1="22" y1="72" x2="58" y2="72" stroke="white" stroke-width="1"/>
+  </svg>
   <div class="header-left">
     <h1>Paris <span>2026</span> ✦ Mon Voyage</h1>
     <p>May 10 – May 25 &nbsp;·&nbsp; 16 Days in France</p>
@@ -448,13 +453,11 @@
     <div class="form-group"><label>預約號碼</label><input type="text" id="tk-ref" placeholder="e.g. LVR-2026-XXXX"></div>
     <div class="form-group"><label>備注</label><textarea id="tk-note" rows="2" placeholder="入場規定、注意事項..."></textarea></div>
     <div class="form-group">
-      <label>QR Code（拖入或點擊上傳）</label>
-      <div class="qr-area" id="qr-drop-zone" onclick="document.getElementById('qr-file-input').click()" ondragover="event.preventDefault()" ondrop="handleQrDrop(event)">
-        <img id="qr-preview" src="" style="display:none;">
-        <div class="qr-placeholder" id="qr-placeholder"><span class="qr-icon">⬛</span>拖入或點擊上傳</div>
-      </div>
-      <input type="file" id="qr-file-input" accept="image/*" style="display:none" onchange="handleQrFile(event)">
+      <label>📂 相關檔案（Google Drive 連結）</label>
+      <input type="url" id="tk-fileurl" placeholder="https://drive.google.com/...">
+      <div style="font-size:.62rem;color:var(--warm-gray);margin-top:4px;">上傳 PDF 到 Google Drive → 右鍵「取得連結」→ 設定「知道連結的人可以檢視」→ 貼上</div>
     </div>
+
     <div class="modal-footer">
       <button class="btn-cancel" onclick="closeTicketModal()">取消</button>
       <button class="btn-primary" onclick="saveTicket()">儲存</button>
@@ -509,10 +512,7 @@
   </div>
 </div>
 
-<div class="qr-lightbox" id="qr-lightbox" onclick="closeQrLightbox()">
-  <button class="qr-lightbox-close">×</button>
-  <img id="qr-lightbox-img" src="" alt="QR">
-</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -569,7 +569,7 @@ function startPolling() {
 const TRIP_START=new Date('2026-05-10');
 const TRIP_END=new Date('2026-05-25');
 let calYear=2026,calMonth=4,currentView='cal',currentPanelDate=null;
-let editingEventId=null,editingTicketId=null,editingExpenseId=null,tempQrData=null,dragId=null;
+let editingEventId=null,editingTicketId=null,editingExpenseId=null,dragId=null;
 let state={events:[],tickets:[],expenses:[]};
 let fbReady=false;
 
@@ -644,10 +644,20 @@ const seedEvents=[
   {id:'e68',date:'2026-05-25',slot:'evening',name:'機上供餐',time:'',maps:'',note:''},
 ];
 const seedTickets=[
-  {id:'t1',name:'羅浮宮 Musée du Louvre',date:'2026-05-14',time:'14:00',people:2,status:'confirmed',ref:'LVR-2026-0514',note:'有租導覽，入口 Richelieu',qr:''},
-  {id:'t2',name:'巴黎聖母院 Notre-Dame',date:'2026-05-16',time:'10:45',people:2,status:'confirmed',ref:'ND-2026-0516',note:'需提早到達',qr:''},
-  {id:'t3',name:'凡爾賽宮 Versailles',date:'2026-05-13',time:'09:00',people:2,status:'confirmed',ref:'VSL-2026-0513',note:'',qr:''},
-  {id:'t4',name:'橘園美術館 Orangerie',date:'2026-05-18',time:'13:00',people:2,status:'pending',ref:'',note:'PMP 第6天',qr:''},
+  {id:'t1', name:'凡爾賽宮 Château de Versailles',      date:'2026-05-12',time:'09:45',people:2,status:'confirmed',ref:'',note:'',fileurl:'https://drive.google.com/file/d/1_zjcVDkz6JYdz9y8jX6hRh25C6G05LhA/view?usp=drive_link'},
+  {id:'t2', name:'羅浮宮 Musée du Louvre',               date:'2026-05-13',time:'14:00',people:2,status:'confirmed',ref:'',note:'',fileurl:'https://drive.google.com/file/d/1li8Pz8j7eIcHiTD-pTodq41V9E7rsx5F/view?usp=drive_link'},
+  {id:'t3', name:'奧賽美術館 Musée d\'Orsay',            date:'2026-05-14',time:'16:00',people:2,status:'confirmed',ref:'',note:'',fileurl:'https://drive.google.com/file/d/1T8qbRUmrIohi6pau7Y3WBVmdYbM0UQG_/view?usp=drive_link'},
+  {id:'t4', name:'巴黎聖母院鐘樓 Notre-Dame',            date:'2026-05-15',time:'10:45',people:2,status:'confirmed',ref:'',note:'',fileurl:'https://drive.google.com/file/d/1I9uSA1G4xOtNWKGj4yXfc5pegKbDjjZ2/view?usp=drive_link'},
+  {id:'t5', name:'巴黎古監獄 Conciergerie',              date:'2026-05-15',time:'13:00',people:2,status:'confirmed',ref:'',note:'',fileurl:'https://drive.google.com/file/d/1Q4VXl0oPjMWP0cKmT2eJ5-z3Qe1jDlEx/view?usp=drive_link'},
+  {id:'t6', name:'聖徒禮拜堂 Sainte-Chapelle',           date:'2026-05-15',time:'16:00',people:2,status:'confirmed',ref:'',note:'',fileurl:'https://drive.google.com/file/d/1Dvwcg6fQVZ56bq7cB4KQzV423sKa85_v/view?usp=drive_link'},
+  {id:'t7', name:'建築與遺產城 Cité de l\'Architecture', date:'2026-05-16',time:'16:00',people:2,status:'confirmed',ref:'',note:'',fileurl:'https://drive.google.com/file/d/12-Alqv-JWD0PPCcX30rJdmxvnhyadeTI/view?usp=drive_link'},
+  {id:'t8', name:'艾菲爾鐵塔 Tour Eiffel',               date:'2026-05-16',time:'18:00',people:2,status:'confirmed',ref:'',note:'',fileurl:''},
+  {id:'t9', name:'橘園美術館 Musée de l\'Orangerie',     date:'2026-05-18',time:'13:00',people:2,status:'confirmed',ref:'',note:'',fileurl:'https://drive.google.com/file/d/1Rg79mmg9yl4YO8ldmlBH8rPb1hJzZfPy/view?usp=drive_link'},
+  {id:'t10',name:'海軍府 Hôtel de la Marine',            date:'2026-05-18',time:'15:00',people:2,status:'confirmed',ref:'',note:'',fileurl:'https://drive.google.com/file/d/1sq-rT0-D4FgwfDBZqIJqiXPBKe0Uq5po/view?usp=drive_link'},
+  {id:'t11',name:'Margaux 餐廳',                         date:'2026-05-18',time:'21:00',people:2,status:'confirmed',ref:'',note:'',fileurl:''},
+  {id:'t12',name:'迪士尼樂園 Disneyland Paris',          date:'2026-05-19',time:'09:00',people:2,status:'confirmed',ref:'',note:'',fileurl:'https://drive.google.com/file/d/1wHN0BSwne2pOpWcq5dAjgN5cpBNkp54Q/view?usp=drive_link'},
+  {id:'t13',name:'Bistrot Chez Rémy',                    date:'2026-05-19',time:'12:30',people:2,status:'confirmed',ref:'',note:'迪士尼內餐廳',fileurl:''},
+  {id:'t14',name:'榮軍院燈光秀 Invalides',               date:'2026-05-22',time:'22:00',people:2,status:'confirmed',ref:'',note:'',fileurl:'https://drive.google.com/file/d/14IZT0BxndtlTQbJXuvFab1QYI7ufLRUK/view?usp=drive_link'},
 ];
 const seedExpenses=[
   {id:'x1',date:'2026-05-14',name:'羅浮宮門票 + 導覽',cat:'景點',cardEur:38,cashEur:0,note:'2人'},
@@ -910,22 +920,24 @@ function renderTickets(){
     const sl=tk.status==='confirmed'?'✅ 已確認':tk.status==='used'?'✔ 已使用':'⏳ 待確認';
     const sc=tk.status==='confirmed'?'badge-confirmed':tk.status==='used'?'badge-used':'badge-pending';
     const card=document.createElement('div');card.className=`ticket-card status-${tk.status}`;
-    card.innerHTML=`<div class="ticket-status-badge ${sc}">${sl}</div><div class="ticket-name">${tk.name}</div><div class="ticket-meta"><span>📅 ${tk.date}${tk.time?' · '+tk.time:''}</span><span>👥 ${tk.people} 人</span>${tk.ref?`<span>🔖 ${tk.ref}</span>`:''}${tk.note?`<span>📝 ${tk.note}</span>`:''}</div><div class="qr-area" onclick="event.stopPropagation();${tk.qr?`openQrLightbox('${tk.id}')`:''}" style="${!tk.qr?'cursor:default':''}">${tk.qr?`<img src="${tk.qr}" alt="QR">`:`<div class="qr-placeholder"><span class="qr-icon">⬛</span>尚未上傳 QR Code</div>`}</div><div class="ticket-actions"><button class="t-btn" onclick="openTicketModal('${tk.id}')">✎ 編輯</button><button class="t-btn" onclick="uploadQr('${tk.id}')">⬆ QR</button><button class="t-btn danger" onclick="deleteTicket('${tk.id}')">✕</button></div>`;
+    const fileLinkHtml=tk.fileurl
+      ?`<a href="${tk.fileurl}" target="_blank" style="display:flex;align-items:center;gap:5px;margin-top:10px;padding:7px 10px;background:rgba(201,168,76,.1);border:1px solid var(--border);border-radius:7px;font-size:.72rem;color:var(--blue);text-decoration:none;transition:all .15s;" onmouseover="this.style.background='rgba(74,111,165,.12)'" onmouseout="this.style.background='rgba(201,168,76,.1)'">📂 <span>相關檔案</span></a>`
+      :`<div style="margin-top:10px;padding:7px 10px;background:rgba(26,20,16,.04);border:1px dashed var(--border);border-radius:7px;font-size:.7rem;color:var(--warm-gray);text-align:center;">尚未新增相關檔案</div>`;
+    card.innerHTML=`<div class="ticket-status-badge ${sc}">${sl}</div><div class="ticket-name">${tk.name}</div><div class="ticket-meta"><span>📅 ${tk.date}${tk.time?' · '+tk.time:''}</span><span>👥 ${tk.people} 人</span>${tk.ref?`<span>🔖 ${tk.ref}</span>`:''}${tk.note?`<span>📝 ${tk.note}</span>`:''}</div>${fileLinkHtml}<div class="ticket-actions" style="margin-top:10px;"><button class="t-btn" onclick="openTicketModal('${tk.id}')">✎ 編輯</button><button class="t-btn danger" onclick="deleteTicket('${tk.id}')">✕ 刪除</button></div>`;
     grid.appendChild(card);
   });
 }
 function openTicketModal(editId){
-  editingTicketId=editId||null;tempQrData=null;
-  document.getElementById('qr-preview').style.display='none';document.getElementById('qr-placeholder').style.display='block';
+  editingTicketId=editId||null;
   if(editId){
     const tk=state.tickets.find(t=>t.id===editId);if(!tk)return;
     document.getElementById('tk-name').value=tk.name;document.getElementById('tk-date').value=tk.date;
     document.getElementById('tk-time').value=tk.time||'';document.getElementById('tk-people').value=tk.people;
     document.getElementById('tk-status').value=tk.status;document.getElementById('tk-ref').value=tk.ref||'';
     document.getElementById('tk-note').value=tk.note||'';
-    if(tk.qr){document.getElementById('qr-preview').src=tk.qr;document.getElementById('qr-preview').style.display='block';document.getElementById('qr-placeholder').style.display='none';}
+    document.getElementById('tk-fileurl').value=tk.fileurl||'';
   }else{
-    ['tk-name','tk-date','tk-time','tk-ref','tk-note'].forEach(id=>document.getElementById(id).value='');
+    ['tk-name','tk-date','tk-time','tk-ref','tk-note','tk-fileurl'].forEach(id=>document.getElementById(id).value='');
     document.getElementById('tk-people').value=2;document.getElementById('tk-status').value='pending';
   }
   document.getElementById('ticket-modal').classList.add('open');
@@ -934,21 +946,13 @@ function closeTicketModal(){document.getElementById('ticket-modal').classList.re
 function saveTicket(){
   const name=document.getElementById('tk-name').value.trim(),date=document.getElementById('tk-date').value;
   if(!name||!date){showToast('請填寫名稱和日期');return;}
-  const data={name,date,time:document.getElementById('tk-time').value,people:+document.getElementById('tk-people').value,status:document.getElementById('tk-status').value,ref:document.getElementById('tk-ref').value,note:document.getElementById('tk-note').value};
+  const data={name,date,time:document.getElementById('tk-time').value,people:+document.getElementById('tk-people').value,status:document.getElementById('tk-status').value,ref:document.getElementById('tk-ref').value,note:document.getElementById('tk-note').value,fileurl:document.getElementById('tk-fileurl').value.trim()};
   if(tempQrData)data.qr=tempQrData;
   if(editingTicketId){const tk=state.tickets.find(t=>t.id===editingTicketId);if(tk)Object.assign(tk,data);}
   else state.tickets.push({id:'t'+Date.now(),qr:'',...data});
   saveState();closeTicketModal();renderTickets();showToast(editingTicketId?'已更新':'已新增');
 }
 function deleteTicket(id){if(!confirm('刪除？'))return;state.tickets=state.tickets.filter(t=>t.id!==id);saveState();renderTickets();showToast('已刪除');}
-function uploadQr(id){
-  const inp=document.createElement('input');inp.type='file';inp.accept='image/*';
-  inp.onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=x=>{const tk=state.tickets.find(t=>t.id===id);if(tk){tk.qr=x.target.result;saveState();renderTickets();showToast('QR Code 已上傳');}};r.readAsDataURL(f);};inp.click();
-}
-function handleQrFile(e){const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=x=>{tempQrData=x.target.result;document.getElementById('qr-preview').src=tempQrData;document.getElementById('qr-preview').style.display='block';document.getElementById('qr-placeholder').style.display='none';};r.readAsDataURL(f);}
-function handleQrDrop(e){const f=e.dataTransfer.files[0];if(!f||!f.type.startsWith('image/'))return;const r=new FileReader();r.onload=x=>{tempQrData=x.target.result;document.getElementById('qr-preview').src=tempQrData;document.getElementById('qr-preview').style.display='block';document.getElementById('qr-placeholder').style.display='none';};r.readAsDataURL(f);}
-function openQrLightbox(id){const tk=state.tickets.find(t=>t.id===id);if(!tk||!tk.qr)return;document.getElementById('qr-lightbox-img').src=tk.qr;document.getElementById('qr-lightbox').classList.add('open');}
-function closeQrLightbox(){document.getElementById('qr-lightbox').classList.remove('open');}
 
 // EXPENSES
 const CAT_META={'機票':{cls:'cat-flight',color:'#4A6FA5',icon:'✈'},'住宿':{cls:'cat-hotel',color:'#8C7B6B',icon:'🏨'},'景點':{cls:'cat-sight',color:'#C9A84C',icon:'🎫'},'交通':{cls:'cat-transport',color:'#5aa0b4',icon:'🚇'},'餐飲':{cls:'cat-food',color:'#7A9E87',icon:'🍽'},'購物':{cls:'cat-shopping',color:'#C4776A',icon:'🛍'},'其他':{cls:'cat-other',color:'#999',icon:'•'}};
