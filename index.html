@@ -119,9 +119,31 @@ nav {
 .page-nav-btn { display:flex; align-items:center; gap:8px; font-size: 0.72rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-light); cursor:pointer; background:none; border:none; transition: color 0.2s; padding: 8px 0; font-family: "Jost", sans-serif; }
 .page-nav-btn:hover { color: var(--gold); }
 .page-nav-date { font-family: "DM Mono", monospace; font-size: 0.78rem; color: var(--ink-light); text-align:center; }
+
+/* LOGIN */
+#login-screen { position:fixed; inset:0; background:var(--ivory); z-index:9999; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:24px; }
+#login-screen.hidden { display:none; }
+.login-title { font-family:"Cormorant Garamond",serif; font-size:2.4rem; font-weight:300; color:var(--ink); text-align:center; line-height:1.2; }
+.login-title em { font-style:italic; color:var(--gold); }
+.login-sub { font-size:.68rem; letter-spacing:.18em; text-transform:uppercase; color:var(--gold); }
+.login-btn { display:flex; align-items:center; gap:10px; background:white; color:#333; border:1px solid var(--border); padding:12px 28px; border-radius:8px; font-family:"Jost",sans-serif; font-size:.88rem; font-weight:400; cursor:pointer; transition:all .2s; box-shadow:var(--shadow-soft); }
+.login-btn:hover { box-shadow:0 4px 20px rgba(28,26,23,0.12); transform:translateY(-1px); }
+.login-note { font-size:.68rem; color:var(--ink-light); text-align:center; }
+.user-badge { display:flex; align-items:center; gap:8px; font-size:.7rem; color:var(--ink-light); }
 </style>
 </head>
 <body>
+
+<!-- LOGIN SCREEN -->
+<div id="login-screen">
+  <div class="login-sub">Paris 2026</div>
+  <div class="login-title">Bon<br><em>Voyage</em></div>
+  <button class="login-btn" onclick="signInGoogle()">
+    <svg width="18" height="18" viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
+    使用 Google 帳號登入
+  </button>
+  <div class="login-note">僅限授權帳號 · Authorized access only</div>
+</div>
 
 <nav>
   <div class="nav-logo">Paris <em>2026</em> · Bon Voyage</div>
@@ -131,6 +153,9 @@ nav {
     <a href="#reservations">預約</a>
     <div class="nav-dot"></div>
     <a href="#tips-section">攻略</a>
+    <div class="nav-dot"></div>
+    <span id="nav-user" class="user-badge" style="display:none;"></span>
+    <a href="#" onclick="signOutGoogle();return false;" id="logout-btn" style="display:none;color:var(--rose);">登出</a>
   </div>
 </nav>
 
@@ -170,10 +195,29 @@ nav {
 <!-- TIPS SECTION -->
 <div style="border-top: 1px solid var(--border);"></div>
 <div class="section" id="tips-section">
-  <div class="section-label">Conseils</div>
+  <div class="section-label">Conseils & Shopping</div>
   <h2 class="section-title">旅遊攻略 <em>Travel Tips</em></h2>
   <div id="all-tips-grid" style="display:flex;flex-direction:column;gap:32px;"></div>
+
+  <!-- Shopping section -->
+  <div style="margin-top:56px;">
+    <div class="section-label" style="margin-bottom:16px;">Shopping · 購物推薦</div>
+    <div id="shopping-grid" style="display:flex;flex-direction:column;gap:10px;"></div>
+  </div>
+
+  <!-- Add new tip -->
+  <div style="margin-top:56px;">
+    <div class="section-label" style="margin-bottom:16px;">Notes · 新增攻略筆記</div>
+    <div id="user-tips-list" style="display:flex;flex-direction:column;gap:10px;margin-bottom:16px;"></div>
+    <button onclick="addUserTip()" style="display:flex;align-items:center;gap:8px;padding:10px 18px;background:rgba(184,150,90,.08);border:1px dashed rgba(184,150,90,.4);border-radius:8px;font-family:'Jost',sans-serif;font-size:.78rem;color:var(--gold);cursor:pointer;width:100%;justify-content:center;transition:all .2s;" onmouseover="this.style.background='rgba(184,150,90,.14)'" onmouseout="this.style.background='rgba(184,150,90,.08)'">
+      ＋ 新增攻略筆記
+    </button>
+  </div>
 </div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
 
 <script>
 const DAYS = [
@@ -645,21 +689,239 @@ function renderAllTips() {
     <div>
       <div style="font-size:.65rem;letter-spacing:.18em;text-transform:uppercase;color:var(--gold);margin-bottom:8px;">${d.date} · ${d.label}</div>
       <div class="tips-grid">
-        ${d.tips.map(t => `
-          <div class="tip-card">
+        ${d.tips.map((t,i) => `
+          <div class="tip-card" style="cursor:pointer;" onclick="toggleTip(this)">
             <div class="tip-icon">${t.icon}</div>
-            <div>
-              <div class="tip-title">${t.title}</div>
-              <div class="tip-content">${t.content}</div>
+            <div style="flex:1;">
+              <div class="tip-title" style="display:flex;justify-content:space-between;align-items:center;">
+                <span>${t.title}</span>
+                <span class="tip-chevron" style="font-size:.7rem;color:var(--gold);transition:transform .2s;">▼</span>
+              </div>
+              <div class="tip-content" style="display:none;margin-top:8px;">${t.content}</div>
             </div>
           </div>`).join("")}
       </div>
     </div>`).join("");
 }
 
+function toggleTip(card) {
+  const content = card.querySelector(".tip-content");
+  const chevron = card.querySelector(".tip-chevron");
+  const isOpen = content.style.display !== "none";
+  content.style.display = isOpen ? "none" : "block";
+  chevron.style.transform = isOpen ? "" : "rotate(180deg)";
+}
+
+// ── SHOPPING ──
+const SHOPPING = [
+  {icon:"🛍️", title:"Monoprix 法國圖案購物袋", content:"約 €3.5，適合送朋友，輕巧好攜帶，各大 Monoprix 超市都有賣。"},
+  {icon:"🧼", title:"Mas du Roseau Paris 肥皂", content:"法國手工肥皂品牌，香味怡人，適合當精緻伴手禮，在食品百貨或藥妝店可找到。"},
+  {icon:"🍵", title:"Mariage Frères 茶葉", content:"推薦在老佛爺 Gourmet 0樓購買。推薦口味：Sweet Shanghai、Milky Blue Absolu、Wedding Imperial、Vert Provence。"},
+  {icon:"🍵", title:"Dammann Frères 茶葉", content:"1692 年創立，法國頂級茶葉品牌，價格相對不算太高，可在店鋪或官網購買。"},
+  {icon:"🏬", title:"老佛爺 VIP 室秘密", content:"主館 Coupole 5F → 找 GUCCI 童裝櫃 → 旁邊是 LE CONCIERGE 禮賓部。室內有沙發區、飲料小點、乾淨廁所、專人辦退稅。長榮旅客滿 50€ 送購物袋 / 滿 650€ 送 Diptyque 蠟燭＋VIP 室＋專人退稅 / 滿 1200€ 送 AMI 棒球帽或倩碧美妝盒。（活動常改版，出發前再查）"},
+  {icon:"🛒", title:"La Vallée Village 購物村", content:"距巴黎約 40 分鐘車程，百家頂級精品與設計師品牌折扣，記得帶護照辦退稅。5/23 整天行程。"},
+  {icon:"🧸", title:"Jelly Cat", content:"英國毛絨玩具品牌，巴黎店必買紀念品，各種動物造型超可愛。5/24 自由日可前往。"},
+  {icon:"🏪", title:"瑪黑區精選店鋪", content:"Merci（選物店）/ The Frankie Shop / Miista / Rouje / LEMAIRE / Dover Street Market / Alaïa / The Broken Arm / OFR Bookshop / Bobby Vintage。"},
+  {icon:"🧃", title:"Innocent 果汁", content:"推薦紫色綜合莓口味，在超市可買到。每賣一瓶有部分金額捐給慈善機構。"},
+  {icon:"📱", title:"省錢 App 推薦", content:"Too Good To Go：較低價格買餐廳驚喜包 / Flush Toilet Finder：找免費廁所 / FlixBus：跨城省錢移動 / Nannybag：寄放行李約 €11.5 / Uber 參考費：約 €20（受時間地點影響）"}
+];
+
+function renderShopping() {
+  const grid = document.getElementById("shopping-grid");
+  if(!grid) return;
+  grid.innerHTML = SHOPPING.map((s,i) => `
+    <div style="background:var(--white);border:1px solid var(--border);border-radius:10px;overflow:hidden;transition:all .2s;">
+      <div onclick="toggleShop(${i})" style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px;cursor:pointer;" onmouseover="this.style.background='rgba(184,150,90,.04)'" onmouseout="this.style.background=''">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span style="font-size:1.1rem;">${s.icon}</span>
+          <span style="font-family:'Cormorant Garamond',serif;font-size:1rem;font-weight:400;">${s.title}</span>
+        </div>
+        <span id="shop-chevron-${i}" style="font-size:.7rem;color:var(--gold);transition:transform .2s;flex-shrink:0;">▼</span>
+      </div>
+      <div id="shop-content-${i}" style="display:none;padding:0 16px 14px 16px;font-size:.78rem;color:var(--ink-light);line-height:1.75;border-top:1px solid var(--border);">
+        <div style="padding-top:12px;">${s.content}</div>
+      </div>
+    </div>`).join("");
+}
+
+function toggleShop(i) {
+  const content = document.getElementById(`shop-content-${i}`);
+  const chevron = document.getElementById(`shop-chevron-${i}`);
+  const isOpen = content.style.display !== "none";
+  content.style.display = isOpen ? "none" : "block";
+  chevron.style.transform = isOpen ? "" : "rotate(180deg)";
+}
+
+// ── USER TIPS ──
+let userTips = [];
+function addUserTip() {
+  const id = Date.now();
+  userTips.push({id, title:"", content:""});
+  renderUserTips();
+  setTimeout(() => document.getElementById(`ut-title-${id}`).focus(), 50);
+}
+function removeUserTip(id) {
+  userTips = userTips.filter(t => t.id !== id);
+  renderUserTips();
+}
+function renderUserTips() {
+  const list = document.getElementById("user-tips-list");
+  if(!list) return;
+  list.innerHTML = userTips.map(t => `
+    <div style="background:var(--white);border:1px solid var(--border);border-radius:10px;overflow:hidden;">
+      <div style="display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid var(--border);">
+        <input id="ut-title-${t.id}" type="text" value="${t.title}" placeholder="主題（例：退稅攻略）"
+          onchange="updateUserTip(${t.id},'title',this.value)"
+          style="flex:1;border:none;outline:none;font-family:'Jost',sans-serif;font-size:.82rem;font-weight:400;color:var(--ink);background:transparent;">
+        <button onclick="toggleUserTip(${t.id})" style="font-size:.7rem;color:var(--gold);background:none;border:none;cursor:pointer;flex-shrink:0;" id="ut-btn-${t.id}">▼</button>
+        <button onclick="removeUserTip(${t.id})" style="font-size:.8rem;color:var(--rose);background:none;border:none;cursor:pointer;flex-shrink:0;">✕</button>
+      </div>
+      <div id="ut-body-${t.id}" style="padding:12px 14px;">
+        <textarea onchange="updateUserTip(${t.id},'content',this.value)"
+          placeholder="內容（可貼網址、心得、注意事項...）"
+          style="width:100%;border:none;outline:none;font-family:'Jost',sans-serif;font-size:.78rem;font-weight:300;color:var(--ink);background:transparent;resize:none;min-height:80px;line-height:1.7;border-bottom:1px dashed rgba(184,150,90,.25);margin-bottom:12px;">${t.content}</textarea>
+        
+        <!-- Image upload area -->
+        <div style="margin-top:4px;">
+          <div onclick="document.getElementById('ut-img-input-${t.id}').click()"
+            style="border:1px dashed rgba(184,150,90,.35);border-radius:8px;padding:12px;text-align:center;cursor:pointer;transition:all .2s;font-size:.74rem;color:var(--gold);"
+            onmouseover="this.style.background='rgba(184,150,90,.06)'" onmouseout="this.style.background=''">
+            📷 點擊上傳圖片
+          </div>
+          <input type="file" id="ut-img-input-${t.id}" accept="image/*" multiple style="display:none"
+            onchange="handleImgUpload(${t.id}, this)">
+          <div id="ut-imgs-${t.id}" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:8px;">
+            ${(t.images||[]).map((img,ii) => `
+              <div style="position:relative;width:80px;height:80px;flex-shrink:0;">
+                <img src="${img}" style="width:80px;height:80px;object-fit:cover;border-radius:6px;border:1px solid var(--border);">
+                <button onclick="removeImg(${t.id},${ii})" style="position:absolute;top:-6px;right:-6px;width:18px;height:18px;border-radius:50%;background:var(--rose);color:white;border:none;cursor:pointer;font-size:.6rem;display:flex;align-items:center;justify-content:center;line-height:1;">✕</button>
+              </div>`).join("")}
+          </div>
+        </div>
+      </div>
+    </div>`).join("");
+}
+
+function handleImgUpload(id, input) {
+  const t = userTips.find(t => t.id === id);
+  if(!t) return;
+  if(!t.images) t.images = [];
+  const files = Array.from(input.files);
+  let loaded = 0;
+  files.forEach(file => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      t.images.push(e.target.result);
+      loaded++;
+      if(loaded === files.length) {
+        saveUserTip(t);
+        renderUserTips();
+        showSync("📷 圖片已同步");
+      }
+    };
+    reader.readAsDataURL(file);
+  });
+  input.value = "";
+}
+
+function removeImg(id, idx) {
+  const t = userTips.find(t => t.id === id);
+  if(t && t.images) { t.images.splice(idx, 1); saveUserTip(t); renderUserTips(); }
+}
+function updateUserTip(id, field, val) {
+  const t = userTips.find(t => t.id === id);
+  if(t) { t[field] = val; saveUserTipDebounced(id); }
+}
+function toggleUserTip(id) {
+  const body = document.getElementById(`ut-body-${id}`);
+  const btn = document.getElementById(`ut-btn-${id}`);
+  const isOpen = body.style.display !== "none";
+  body.style.display = isOpen ? "none" : "block";
+  btn.style.transform = isOpen ? "rotate(180deg)" : "";
+}
+
+// ── FIREBASE ──
+const FB_CONFIG = {
+  apiKey: "AIzaSyB_lOmCtVXPrOrs30iEZrqh_jyWUeEfbHo",
+  authDomain: "prais-5121b.firebaseapp.com",
+  databaseURL: "https://prais-5121b-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "prais-5121b",
+  storageBucket: "prais-5121b.firebasestorage.app",
+  messagingSenderId: "1051122173263",
+  appId: "1:1051122173263:web:273b3907c59a4fd51cf13a"
+};
+firebase.initializeApp(FB_CONFIG);
+const auth = firebase.auth();
+const db = firebase.database();
+const TIPS_REF = db.ref("paris2026/userTips");
+const ALLOWED = "anatoliachy@gmail.com";
+
+function signInGoogle() {
+  auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()).catch(()=>{});
+}
+function signOutGoogle() {
+  auth.signOut().then(()=>{
+    document.getElementById("login-screen").classList.remove("hidden");
+    document.getElementById("nav-user").style.display="none";
+    document.getElementById("logout-btn").style.display="none";
+  });
+}
+
+auth.onAuthStateChanged(user => {
+  if(user && user.email === ALLOWED) {
+    document.getElementById("login-screen").classList.add("hidden");
+    document.getElementById("nav-user").style.display="flex";
+    document.getElementById("nav-user").textContent = "👤 " + user.displayName.split(" ")[0];
+    document.getElementById("logout-btn").style.display="inline";
+    initTipsSync();
+  } else if(user) {
+    auth.signOut();
+    showSync("⚠ 此帳號無使用權限");
+  } else {
+    document.getElementById("login-screen").classList.remove("hidden");
+  }
+});
+
+function initTipsSync() {
+  TIPS_REF.on("value", snap => {
+    const data = snap.val();
+    userTips = data ? Object.values(data).sort((a,b) => a.id - b.id) : [];
+    renderUserTips();
+  });
+}
+
+// 顯示同步狀態
+const syncBadge = document.createElement("div");
+syncBadge.id = "sync-badge";
+syncBadge.style.cssText = "position:fixed;bottom:20px;right:20px;background:var(--ink);color:var(--gold-pale);font-family:'Jost',sans-serif;font-size:.68rem;padding:7px 14px;border-radius:20px;opacity:0;transition:opacity .3s;pointer-events:none;z-index:999;";
+document.body.appendChild(syncBadge);
+function showSync(msg) {
+  syncBadge.textContent = msg;
+  syncBadge.style.opacity = "1";
+  setTimeout(() => syncBadge.style.opacity = "0", 2000);
+}
+
+function addUserTip() {
+  const id = Date.now();
+  const t = {id, title:"", content:"", images:[]};
+  userTips.push(t);
+  saveUserTip(t);
+  renderUserTips();
+  showSync("✦ 已建立新筆記");
+  setTimeout(() => { const el = document.getElementById(`ut-title-${id}`); if(el) el.focus(); }, 50);
+}
+
+function removeUserTip(id) {
+  userTips = userTips.filter(t => t.id !== id);
+  deleteUserTipFromDB(id);
+  renderUserTips();
+  showSync("已刪除筆記");
+}
+
 renderStrip();
 renderReservations();
 renderAllTips();
+renderShopping();
 </script>
 </body>
 </html>
