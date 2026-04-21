@@ -3,1225 +3,663 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Paris 2026 ✦ Mon Voyage</title>
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
-<!-- Firebase SDK with Auth -->
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
-<!-- SheetJS for Excel export -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<title>Paris 2026 ✦ Bon Voyage</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Jost:wght@300;400;500&family=DM+Mono:wght@400&display=swap" rel="stylesheet">
 <style>
-  :root{--cream:#F5F0E8;--dark:#1A1410;--gold:#C9A84C;--gold-light:#E8D5A3;--rose:#C4776A;--sage:#7A9E87;--blue:#4A6FA5;--warm-gray:#8C7B6B;--card-bg:#FDFAF5;--border:rgba(201,168,76,0.25);--shadow:0 4px 24px rgba(26,20,16,0.08);}
-  *{margin:0;padding:0;box-sizing:border-box;}
-  body{background:var(--cream);color:var(--dark);font-family:'DM Sans',sans-serif;min-height:100vh;overflow-x:hidden;}
+:root {
+  --ivory: #FAF8F3;
+  --white: #FFFFFF;
+  --ink: #1C1A17;
+  --ink-light: #4A4540;
+  --gold: #B8965A;
+  --gold-pale: #E8D9BE;
+  --sage: #7A9080;
+  --rose: #C4847A;
+  --blue: #3D5A7A;
+  --border: rgba(184,150,90,0.18);
+  --shadow-soft: 0 2px 20px rgba(28,26,23,0.06);
+}
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+html { scroll-behavior: smooth; }
+body { background: var(--ivory); color: var(--ink); font-family: "Jost", sans-serif; font-weight: 300; line-height: 1.7; }
 
-  /* SYNC STATUS BAR */
-  #sync-bar{background:var(--dark);color:var(--gold-light);font-size:.68rem;text-align:center;padding:4px 16px;letter-spacing:.06em;display:flex;align-items:center;justify-content:center;gap:8px;min-height:24px;}
-  #sync-bar.synced{background:#2a3d2a;}
-  #sync-bar.error{background:#4a2020;}
-  .sync-dot{width:6px;height:6px;border-radius:50%;background:var(--gold);display:inline-block;flex-shrink:0;}
-  #sync-bar.synced .sync-dot{background:#7ec87e;animation:pulse 2s ease-in-out infinite;}
-  #sync-bar.error .sync-dot{background:var(--rose);}
-  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+nav {
+  position: fixed; top:0; left:0; right:0; z-index: 100;
+  background: rgba(250,248,243,0.92); backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 40px; height: 60px;
+}
+.nav-logo { font-family: "Cormorant Garamond", serif; font-size: 1.1rem; font-weight: 400; letter-spacing: 0.08em; color: var(--ink); }
+.nav-logo em { color: var(--gold); font-style: italic; }
+.nav-links { display:flex; gap:32px; align-items:center; }
+.nav-links a { font-size: 0.72rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-light); text-decoration: none; transition: color 0.2s; }
+.nav-links a:hover { color: var(--gold); }
+.nav-dot { width:4px; height:4px; border-radius:50%; background: var(--gold); opacity:0.5; }
 
-  header{background:var(--dark);color:var(--cream);padding:16px 28px;position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--gold);overflow:hidden;}
-  .header-left h1{font-family:'Playfair Display',serif;font-size:1.4rem;letter-spacing:.02em;}
-  .header-left h1 span{color:var(--gold);font-style:italic;}
-  .header-left p{font-size:.66rem;color:var(--gold-light);letter-spacing:.12em;text-transform:uppercase;margin-top:2px;}
-  .header-right{display:flex;gap:6px;flex-wrap:wrap;align-items:center;}
-  .nav-btn{background:transparent;border:1px solid rgba(201,168,76,.4);color:var(--cream);padding:6px 13px;border-radius:4px;font-family:'DM Sans',sans-serif;font-size:.74rem;cursor:pointer;transition:all .2s;letter-spacing:.04em;}
-  .nav-btn:hover,.nav-btn.active{background:var(--gold);color:var(--dark);border-color:var(--gold);}
-  .export-btn{background:transparent;border:1px solid rgba(122,158,135,.5);color:#a8d5a2;padding:6px 13px;border-radius:4px;font-family:'DM Sans',sans-serif;font-size:.74rem;cursor:pointer;transition:all .2s;}
-  .export-btn:hover{background:var(--sage);color:var(--dark);border-color:var(--sage);}
+.hero {
+  min-height: 100vh; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; text-align: center;
+  padding: 80px 40px 60px; position: relative; overflow: hidden;
+  background: var(--ivory);
+}
+.hero-tower { position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); opacity: 0.10; pointer-events: none; }
+.hero-eyebrow { font-size: 0.68rem; letter-spacing: 0.22em; text-transform: uppercase; color: var(--gold); margin-bottom: 24px; display: flex; align-items: center; gap: 14px; }
+.hero-eyebrow::before, .hero-eyebrow::after { content: ""; width: 32px; height: 1px; background: var(--gold); opacity: 0.5; }
+.hero-title { font-family: "Cormorant Garamond", serif; font-size: clamp(3.5rem, 8vw, 7rem); font-weight: 300; line-height: 1.05; margin-bottom: 8px; color: var(--ink); }
+.hero-title em { font-style: italic; color: var(--gold); }
+.hero-subtitle { font-family: "Cormorant Garamond", serif; font-size: clamp(1.1rem, 2.5vw, 1.6rem); font-weight: 300; font-style: italic; color: var(--ink-light); margin-bottom: 40px; }
+.hero-meta { display: flex; gap: 40px; align-items: center; font-size: 0.72rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-light); }
+.hero-meta-item { display:flex; flex-direction:column; align-items:center; gap:4px; }
+.hero-meta-num { font-family: "DM Mono", monospace; font-size: 1.6rem; color: var(--ink); font-weight: 400; line-height: 1; }
+.hero-divider { width:1px; height:40px; background: var(--border); }
 
-  main{max-width:1400px;margin:0 auto;padding:24px 24px 80px;}
-  .tab-section{display:none;}.tab-section.active{display:block;}
+.section { padding: 80px 40px; max-width: 1100px; margin: 0 auto; }
+.section-label { font-size: 0.66rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--gold); margin-bottom: 12px; display: flex; align-items: center; gap: 10px; }
+.section-label::after { content:""; flex:1; height:1px; background:var(--border); }
+.section-title { font-family: "Cormorant Garamond", serif; font-size: clamp(1.8rem, 3vw, 2.6rem); font-weight: 300; margin-bottom: 48px; line-height: 1.2; }
+.section-title em { font-style: italic; color: var(--gold); }
 
-  .view-toggle{display:flex;gap:3px;background:rgba(26,20,16,.06);border-radius:6px;padding:3px;}
-  .view-btn{padding:5px 12px;border-radius:4px;border:none;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:.73rem;background:transparent;color:var(--warm-gray);transition:all .2s;}
-  .view-btn.active{background:var(--dark);color:var(--cream);}
+.trip-strip { display: grid; grid-template-columns: repeat(16, 1fr); gap: 3px; margin-bottom: 60px; }
+.day-pill { background: var(--white); border: 1px solid var(--border); border-radius: 4px; padding: 10px 6px; text-align: center; cursor: pointer; transition: all 0.2s; }
+.day-pill:hover { border-color: var(--gold); transform: translateY(-2px); box-shadow: var(--shadow-soft); }
+.day-pill.active { background: var(--ink); color: var(--white); border-color: var(--ink); }
+.day-pill.active .dp-date { color: var(--gold-pale); }
+.day-pill.active .dp-day { color: rgba(255,255,255,0.6); }
+.dp-date { font-family: "DM Mono", monospace; font-size: 0.75rem; display:block; }
+.dp-day { font-size: 0.58rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-light); display:block; margin-top:2px; }
+.dp-dot { width:4px; height:4px; border-radius:50%; background:var(--gold); margin: 5px auto 0; }
 
-  .section-title{font-family:'Playfair Display',serif;font-size:1.2rem;color:var(--dark);display:flex;align-items:center;gap:12px;margin-bottom:16px;}
-  .section-title::after{content:'';flex:1;height:1px;background:var(--border);}
+.day-header { display: grid; grid-template-columns: auto 1fr; gap: 32px; align-items: start; padding: 40px 0 32px; border-bottom: 1px solid var(--border); margin-bottom: 40px; }
+.day-number { font-family: "Cormorant Garamond", serif; font-size: 5rem; font-weight: 300; line-height: 1; color: var(--gold-pale); position: relative; }
+.day-number::after { content: attr(data-month); position: absolute; bottom: 0; left: 0; font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--gold); font-family: "Jost", sans-serif; font-weight: 400; }
+.day-title-en { font-size: 0.65rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--gold); margin-bottom: 6px; }
+.day-title { font-family: "Cormorant Garamond", serif; font-size: 2.2rem; font-weight: 300; line-height: 1.2; margin-bottom: 10px; }
+.day-summary { font-size: 0.82rem; color: var(--ink-light); line-height: 1.7; padding: 10px 14px; border-left: 2px solid var(--gold-pale); }
 
-  /* CALENDAR */
-  .calendar-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px;}
-  .calendar-month{font-family:'Playfair Display',serif;font-size:1.3rem;display:flex;align-items:center;gap:12px;}
-  .cal-nav{background:none;border:1px solid var(--border);color:var(--dark);width:30px;height:30px;border-radius:50%;cursor:pointer;font-size:1rem;display:flex;align-items:center;justify-content:center;transition:all .2s;}
-  .cal-nav:hover{background:var(--gold);color:white;border-color:var(--gold);}
-  .calendar-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;}
-  .cal-day-header{text-align:center;padding:6px;font-size:.64rem;font-weight:500;color:var(--warm-gray);letter-spacing:.1em;text-transform:uppercase;}
-  .cal-day{min-height:105px;background:var(--card-bg);border:1px solid var(--border);border-radius:6px;padding:6px;position:relative;transition:box-shadow .2s;cursor:pointer;}
-  .cal-day:hover{box-shadow:var(--shadow);}
-  .cal-day.other-month{opacity:.3;}
-  .cal-day.trip-day{background:linear-gradient(135deg,#FDFAF5 0%,#FDF6E8 100%);}
-  .cal-day.trip-day.has-events{border-left:3px solid var(--gold);}
-  .day-num{font-family:'DM Mono',monospace;font-size:.72rem;color:var(--warm-gray);margin-bottom:3px;display:flex;align-items:center;justify-content:space-between;}
-  .day-label{font-size:.54rem;color:var(--gold);font-weight:600;letter-spacing:.08em;}
-  .day-events{display:flex;flex-direction:column;gap:2px;}
-  .event-chip{font-size:.57rem;padding:2px 4px;border-radius:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-  .chip-morning{background:rgba(122,158,135,.2);color:#3d7a55;}
-  .chip-afternoon{background:rgba(74,111,165,.2);color:var(--blue);}
-  .chip-evening{background:rgba(196,119,106,.2);color:var(--rose);}
-  .chip-note{background:rgba(201,168,76,.15);color:#8a6a1a;}
-  .add-more{font-size:.52rem;color:var(--warm-gray);margin-top:2px;}
-  .day-add-btn{position:absolute;bottom:4px;right:4px;width:17px;height:17px;border-radius:50%;background:var(--gold);color:white;border:none;font-size:.78rem;cursor:pointer;display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity .2s;}
-  .cal-day:hover .day-add-btn{opacity:1;}
+.timeline { position:relative; padding-left: 32px; }
+.timeline::before { content:""; position:absolute; left:7px; top:0; bottom:0; width:1px; background: linear-gradient(to bottom, transparent, var(--border) 5%, var(--border) 95%, transparent); }
+.tl-slot { margin-bottom: 32px; position: relative; }
+.tl-slot-label { font-size: 0.62rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--gold); margin-bottom: 12px; display: flex; align-items: center; gap: 8px; position: relative; }
+.tl-slot-label::before { content:""; width:15px; height:15px; border-radius:50%; border: 1px solid var(--gold); background: var(--ivory); position:absolute; left:-32px; top:-1px; }
+.tl-slot-label.morning::before { background: var(--gold); }
+.tl-items { display:flex; flex-direction:column; gap:10px; }
+.tl-item { background: var(--white); border: 1px solid var(--border); border-radius: 10px; padding: 16px 18px; display: flex; gap: 12px; align-items: start; transition: all 0.2s; }
+.tl-item:hover { border-color: var(--gold-pale); box-shadow: var(--shadow-soft); }
+.tl-item-name { font-family: "Cormorant Garamond", serif; font-size: 1.05rem; font-weight: 400; margin-bottom: 3px; }
+.tl-item-name a { color: var(--ink); text-decoration: none; }
+.tl-item-name a:hover { color: var(--blue); }
+.tl-item-time { font-family: "DM Mono", monospace; font-size: 0.72rem; color: var(--ink-light); margin-bottom: 4px; }
+.tl-item-note { font-size: 0.76rem; color: var(--ink-light); font-style: italic; line-height: 1.6; }
+.tl-item-tag { font-size: 0.6rem; letter-spacing: 0.08em; text-transform: uppercase; padding: 3px 8px; border-radius: 20px; white-space: nowrap; background: rgba(184,150,90,0.1); color: var(--gold); border: 1px solid rgba(184,150,90,0.3); align-self: start; flex-shrink: 0; margin-left: 8px; }
 
-  /* LIST VIEW */
-  .list-day{border:1px solid var(--border);border-radius:10px;margin-bottom:6px;background:var(--card-bg);overflow:hidden;}
-  .list-day-header{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;cursor:pointer;user-select:none;transition:background .15s;}
-  .list-day-header:hover{background:rgba(201,168,76,.07);}
-  .list-day.trip-day .list-day-header{border-left:4px solid var(--gold);}
-  .list-day-left{display:flex;align-items:center;gap:12px;}
-  .list-day-date{font-family:'DM Mono',monospace;font-size:.78rem;color:var(--warm-gray);min-width:84px;}
-  .list-day-chips{display:flex;gap:3px;flex-wrap:wrap;margin-top:2px;}
-  .list-day-right{display:flex;align-items:center;gap:8px;}
-  .list-count{font-size:.64rem;color:var(--warm-gray);background:rgba(26,20,16,.07);padding:2px 7px;border-radius:10px;}
-  .list-chevron{font-size:.86rem;color:var(--warm-gray);transition:transform .2s;}
-  .list-day.open .list-chevron{transform:rotate(90deg);}
-  .list-day-body{display:none;border-top:1px solid var(--border);padding:10px 14px;}
-  .list-day.open .list-day-body{display:block;}
-  .list-events{display:flex;flex-direction:column;gap:6px;}
-  .list-event-item{background:white;border:1px solid var(--border);border-radius:7px;padding:8px 10px;display:flex;align-items:flex-start;gap:7px;cursor:grab;transition:all .15s;}
-  .list-event-item:active{cursor:grabbing;opacity:.7;}
-  .list-event-item.dragging{opacity:.4;}
-  .list-event-item.drag-over{border-color:var(--gold);box-shadow:0 0 0 2px rgba(201,168,76,.3);}
-  .list-add-btn{background:none;border:1px dashed var(--border);border-radius:6px;width:100%;padding:6px;font-size:.72rem;color:var(--warm-gray);cursor:pointer;transition:all .15s;font-family:'DM Sans',sans-serif;margin-top:6px;}
-  .list-add-btn:hover{border-color:var(--gold);color:var(--gold);}
+.spot-note { width:100%; border:none; border-bottom:1px dashed rgba(184,150,90,0.3); background:transparent; font-family:"Jost",sans-serif; font-size:0.74rem; font-weight:300; color:var(--ink); resize:none; outline:none; padding:4px 0; line-height:1.6; transition:border-color 0.2s; margin-top:8px; display:block; }
+.spot-note:focus { border-color: var(--gold); }
 
-  /* PANEL */
-  .detail-panel{position:fixed;right:0;top:0;bottom:0;width:380px;background:var(--card-bg);border-left:1px solid var(--border);box-shadow:-8px 0 40px rgba(26,20,16,.12);transform:translateX(100%);transition:transform .3s ease;z-index:200;overflow-y:auto;padding:22px;display:flex;flex-direction:column;gap:14px;}
-  .detail-panel.open{transform:translateX(0);}
-  .panel-header{display:flex;align-items:center;justify-content:space-between;}
-  .panel-date{font-family:'Playfair Display',serif;font-size:1.15rem;}
-  .panel-close{background:none;border:1px solid var(--border);color:var(--dark);width:28px;height:28px;border-radius:50%;cursor:pointer;font-size:1rem;display:flex;align-items:center;justify-content:center;}
-  .panel-close:hover{background:var(--rose);color:white;border-color:var(--rose);}
-  .event-list{display:flex;flex-direction:column;gap:7px;}
-  .event-item{background:white;border:1px solid var(--border);border-radius:8px;padding:9px 11px;display:flex;align-items:flex-start;gap:7px;cursor:grab;transition:all .2s;}
-  .event-item:active{cursor:grabbing;opacity:.7;}
-  .event-item.dragging{opacity:.4;}
-  .event-item.drag-over{border-color:var(--gold);box-shadow:0 0 0 2px rgba(201,168,76,.3);}
-  .event-dot{width:6px;height:6px;border-radius:50%;margin-top:4px;flex-shrink:0;}
-  .dot-morning{background:var(--sage);}.dot-afternoon{background:var(--blue);}.dot-evening{background:var(--rose);}.dot-note{background:var(--gold);}
-  .event-content{flex:1;min-width:0;}
-  .event-name{font-size:.8rem;font-weight:500;}
-  .event-name a{color:var(--blue);text-decoration:none;}
-  .event-name a:hover{text-decoration:underline;}
-  .event-time{font-family:'DM Mono',monospace;font-size:.66rem;color:var(--warm-gray);margin-top:1px;}
-  .event-note-text{font-size:.67rem;color:var(--warm-gray);margin-top:2px;font-style:italic;}
-  .event-actions{display:flex;gap:3px;opacity:0;transition:opacity .2s;}
-  .event-item:hover .event-actions{opacity:1;}
-  .act-btn{background:none;border:none;cursor:pointer;padding:2px 4px;font-size:.74rem;border-radius:3px;color:var(--warm-gray);transition:all .15s;}
-  .act-btn:hover{background:var(--cream);color:var(--dark);}
-  .act-btn.del:hover{background:rgba(196,119,106,.15);color:var(--rose);}
-  .drag-handle{cursor:grab;color:var(--warm-gray);font-size:.74rem;padding:2px;flex-shrink:0;}
-  .panel-add-btn{background:var(--dark);color:var(--cream);border:none;padding:8px 14px;border-radius:6px;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:.77rem;display:flex;align-items:center;gap:5px;transition:all .2s;}
-  .panel-add-btn:hover{background:var(--gold);color:var(--dark);}
-  .hotel-info{background:rgba(201,168,76,.1);border:1px solid var(--border);border-radius:8px;padding:10px 12px;}
-  .hotel-label{font-size:.6rem;text-transform:uppercase;letter-spacing:.1em;color:var(--warm-gray);margin-bottom:3px;}
-  .hotel-name{font-size:.83rem;font-weight:500;}
-  .hotel-addr{font-size:.67rem;color:var(--warm-gray);margin-top:2px;}
+.tips-grid { display:flex; flex-direction:column; gap:10px; margin-top:24px; }
+.tip-card { background: rgba(184,150,90,0.05); border: 1px solid rgba(184,150,90,0.2); border-radius: 10px; padding: 14px 16px; display: grid; grid-template-columns: auto 1fr; gap: 12px; align-items: start; }
+.tip-icon { font-size: 1.1rem; line-height: 1.4; }
+.tip-title { font-size: 0.72rem; font-weight: 500; letter-spacing: 0.05em; text-transform: uppercase; color: var(--gold); margin-bottom: 5px; }
+.tip-content { font-size: 0.78rem; color: var(--ink-light); line-height: 1.75; }
 
-  /* TICKETS */
-  .tickets-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:12px;margin-bottom:16px;}
-  .ticket-card{background:var(--card-bg);border:1px solid var(--border);border-radius:12px;padding:14px;position:relative;overflow:hidden;transition:all .2s;}
-  .ticket-card:hover{box-shadow:var(--shadow);transform:translateY(-2px);}
-  .ticket-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--gold);}
-  .ticket-card.status-confirmed::before{background:var(--sage);}
-  .ticket-card.status-used::before{background:var(--warm-gray);}
-  .ticket-status-badge{display:inline-flex;align-items:center;gap:4px;font-size:.6rem;padding:2px 7px;border-radius:20px;font-weight:500;letter-spacing:.05em;margin-bottom:7px;}
-  .badge-confirmed{background:rgba(122,158,135,.15);color:#3d7a55;}
-  .badge-pending{background:rgba(201,168,76,.15);color:#8a6a1a;}
-  .badge-used{background:rgba(140,123,107,.15);color:var(--warm-gray);}
-  .ticket-name{font-family:'Playfair Display',serif;font-size:.94rem;margin-bottom:5px;}
-  .ticket-meta{font-size:.68rem;color:var(--warm-gray);display:flex;flex-direction:column;gap:2px;}
-  .ticket-meta span{display:flex;align-items:center;gap:4px;}
-  .qr-area{margin-top:10px;border:1px dashed var(--border);border-radius:8px;padding:8px;text-align:center;cursor:pointer;transition:all .2s;}
-  .qr-area:hover{border-color:var(--gold);background:rgba(201,168,76,.05);}
-  .qr-area img{max-width:100px;max-height:100px;border-radius:4px;}
-  .qr-placeholder{color:var(--warm-gray);font-size:.67rem;padding:8px 0;}
-  .qr-placeholder .qr-icon{font-size:1.5rem;display:block;margin-bottom:2px;}
-  .ticket-actions{display:flex;gap:6px;margin-top:9px;}
-  .t-btn{flex:1;padding:5px;border-radius:5px;font-size:.68rem;cursor:pointer;border:1px solid var(--border);background:white;color:var(--dark);transition:all .15s;font-family:'DM Sans',sans-serif;}
-  .t-btn:hover{background:var(--dark);color:white;border-color:var(--dark);}
-  .t-btn.danger:hover{background:var(--rose);border-color:var(--rose);color:white;}
-  .add-ticket-btn{background:white;border:2px dashed var(--border);border-radius:12px;padding:24px;width:100%;cursor:pointer;color:var(--warm-gray);font-family:'DM Sans',sans-serif;font-size:.8rem;transition:all .2s;display:flex;flex-direction:column;align-items:center;gap:4px;}
-  .add-ticket-btn:hover{border-color:var(--gold);color:var(--gold);}
-  .add-ticket-btn .plus{font-size:1.3rem;}
+.food-grid { display:grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap:14px; margin-top: 24px; }
+.food-card { background: var(--white); border: 1px solid var(--border); border-radius: 10px; padding: 16px; transition: all 0.2s; }
+.food-card:hover { border-color: var(--gold-pale); box-shadow: var(--shadow-soft); }
+.food-card-type { font-size: 0.6rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--rose); margin-bottom: 7px; }
+.food-card-name { font-family: "Cormorant Garamond", serif; font-size: 1rem; font-weight: 400; margin-bottom: 5px; }
+.food-card-desc { font-size: 0.74rem; color: var(--ink-light); line-height: 1.6; }
+.food-card-price { font-family: "DM Mono", monospace; font-size: 0.68rem; color: var(--sage); margin-top: 8px; }
 
-  /* EXPENSES */
-  .expense-layout{display:grid;grid-template-columns:1fr 370px;gap:18px;}
-  @media(max-width:960px){.expense-layout{grid-template-columns:1fr;}}
-  .expense-table-wrap{overflow-x:auto;}
-  table{width:100%;border-collapse:collapse;background:var(--card-bg);border-radius:10px;overflow:hidden;}
-  th{background:var(--dark);color:var(--cream);padding:8px 10px;text-align:left;font-size:.66rem;letter-spacing:.08em;text-transform:uppercase;font-weight:400;}
-  td{padding:8px 10px;font-size:.77rem;border-bottom:1px solid var(--border);vertical-align:middle;}
-  tr:last-child td{border-bottom:none;}
-  tr:hover td{background:rgba(201,168,76,.04);}
-  .cat-badge{display:inline-block;padding:2px 6px;border-radius:12px;font-size:.6rem;font-weight:500;}
-  .cat-flight{background:rgba(74,111,165,.15);color:#2a4f8a;}
-  .cat-hotel{background:rgba(140,123,107,.15);color:var(--warm-gray);}
-  .cat-sight{background:rgba(201,168,76,.15);color:#8a6a1a;}
-  .cat-transport{background:rgba(90,160,180,.15);color:#2a7a90;}
-  .cat-food{background:rgba(122,158,135,.15);color:#3d7a55;}
-  .cat-shopping{background:rgba(196,119,106,.15);color:var(--rose);}
-  .cat-other{background:rgba(26,20,16,.08);color:var(--dark);}
-  .pay-badge{display:inline-flex;align-items:center;gap:3px;padding:2px 6px;border-radius:10px;font-size:.59rem;font-weight:500;}
-  .pay-card{background:rgba(74,111,165,.12);color:var(--blue);}
-  .pay-cash{background:rgba(122,158,135,.12);color:#3d7a55;}
-  .pay-mix{background:rgba(201,168,76,.12);color:#8a6a1a;}
-  .amount-eur{font-family:'DM Mono',monospace;font-weight:500;}
-  .amount-twd{font-family:'DM Mono',monospace;font-size:.66rem;color:var(--warm-gray);}
+.notes-box { background: var(--white); border: 1px dashed var(--border); border-radius: 10px; padding: 20px; margin-top: 32px; }
+.notes-box-label { font-size: 0.62rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--ink-light); margin-bottom: 10px; display:flex; align-items:center; gap:7px; }
+.notes-box textarea { width:100%; border:none; outline:none; resize:vertical; font-family: "Jost", sans-serif; font-size: 0.82rem; font-weight:300; color: var(--ink); background: transparent; min-height: 80px; line-height: 1.7; }
+.notes-box textarea::placeholder { color: rgba(74,69,64,0.35); }
 
-  .expense-sidebar{display:flex;flex-direction:column;gap:12px;}
-  .exchange-box{background:var(--card-bg);border:1px solid var(--border);border-radius:12px;padding:12px;}
-  .exch-label{font-size:.63rem;text-transform:uppercase;letter-spacing:.1em;color:var(--warm-gray);margin-bottom:6px;}
-  .exch-rate{font-family:'DM Mono',monospace;font-size:.98rem;font-weight:500;}
-  .exch-rate input{width:70px;font-family:'DM Mono',monospace;font-size:.92rem;border:none;border-bottom:1px solid var(--gold);background:transparent;color:var(--dark);padding:0 3px;outline:none;}
-  .sum-cards{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
-  .sum-card{background:var(--dark);color:var(--cream);border-radius:10px;padding:12px 13px;}
-  .sum-card.card-cash{background:#3a5a37;}
-  .sum-card-label{font-size:.59rem;letter-spacing:.07em;text-transform:uppercase;color:rgba(255,255,255,.55);margin-bottom:4px;}
-  .sum-card-eur{font-family:'Playfair Display',serif;font-size:1.28rem;color:var(--gold);}
-  .sum-card.card-cash .sum-card-eur{color:#a8d5a2;}
-  .sum-card-twd{font-size:.66rem;color:rgba(255,255,255,.4);margin-top:1px;}
-  .sum-total-card{background:var(--dark);border-radius:10px;padding:14px;border:1px solid var(--gold);}
-  .sum-total-label{font-size:.59rem;letter-spacing:.08em;text-transform:uppercase;color:var(--gold-light);margin-bottom:6px;}
-  .sum-total-eur{font-family:'Playfair Display',serif;font-size:1.8rem;color:var(--gold);}
-  .sum-total-twd{font-size:.74rem;color:rgba(245,240,232,.5);margin-top:2px;}
-  .bar-chart{background:var(--card-bg);border:1px solid var(--border);border-radius:12px;padding:12px;}
-  .bar-chart-title{font-size:.63rem;text-transform:uppercase;letter-spacing:.1em;color:var(--warm-gray);margin-bottom:9px;}
-  .bar-row{margin-bottom:8px;}
-  .bar-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:3px;}
-  .bar-label{font-size:.68rem;color:var(--dark);}
-  .bar-amounts{font-family:'DM Mono',monospace;font-size:.63rem;color:var(--warm-gray);display:flex;gap:6px;flex-wrap:wrap;}
-  .bar-track{height:6px;background:rgba(26,20,16,.08);border-radius:4px;overflow:hidden;}
-  .bar-stack{height:100%;display:flex;}
-  .bar-card-fill{height:100%;background:var(--blue);opacity:.7;transition:width .4s ease;}
-  .bar-cash-fill{height:100%;background:var(--sage);opacity:.7;transition:width .4s ease;}
-
-  /* EXPORT PANEL */
-  .export-panel{background:var(--card-bg);border:1px solid var(--border);border-radius:12px;padding:14px;}
-  .export-title{font-size:.63rem;text-transform:uppercase;letter-spacing:.1em;color:var(--warm-gray);margin-bottom:10px;}
-  .export-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;}
-  .export-item-btn{background:white;border:1px solid var(--border);border-radius:8px;padding:10px;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:.74rem;color:var(--dark);transition:all .15s;display:flex;flex-direction:column;align-items:center;gap:4px;}
-  .export-item-btn:hover{background:var(--dark);color:var(--cream);border-color:var(--dark);}
-  .export-item-btn .ei-icon{font-size:1.2rem;}
-  .export-all-btn{width:100%;margin-top:7px;background:var(--sage);border:none;border-radius:8px;padding:10px;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:.78rem;color:white;transition:all .15s;font-weight:500;}
-  .export-all-btn:hover{background:#5d8a6e;}
-
-  /* MODALS */
-  .modal-overlay{position:fixed;inset:0;background:rgba(26,20,16,.6);z-index:500;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .2s;backdrop-filter:blur(4px);}
-  .modal-overlay.open{opacity:1;pointer-events:all;}
-  .modal{background:var(--card-bg);border-radius:14px;padding:22px;width:480px;max-width:95vw;max-height:90vh;overflow-y:auto;transform:translateY(20px);transition:transform .2s;border:1px solid var(--border);}
-  .modal-overlay.open .modal{transform:translateY(0);}
-  .modal-title{font-family:'Playfair Display',serif;font-size:1.05rem;margin-bottom:15px;}
-  .form-group{margin-bottom:11px;}
-  .form-group label{display:block;font-size:.67rem;text-transform:uppercase;letter-spacing:.08em;color:var(--warm-gray);margin-bottom:3px;}
-  .form-group input,.form-group select,.form-group textarea{width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:6px;font-family:'DM Sans',sans-serif;font-size:.81rem;background:white;color:var(--dark);outline:none;transition:border-color .2s;}
-  .form-group input:focus,.form-group select:focus,.form-group textarea:focus{border-color:var(--gold);}
-  .form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
-  .modal-footer{display:flex;justify-content:flex-end;gap:8px;margin-top:15px;}
-  .btn-cancel{background:white;border:1px solid var(--border);color:var(--dark);padding:7px 15px;border-radius:6px;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:.77rem;transition:all .15s;}
-  .btn-cancel:hover{background:var(--cream);}
-  .btn-primary{background:var(--dark);color:var(--cream);border:none;padding:7px 18px;border-radius:6px;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:.77rem;transition:all .2s;}
-  .btn-primary:hover{background:var(--gold);color:var(--dark);}
-  .pay-section{background:rgba(201,168,76,.06);border-radius:8px;padding:11px;margin-bottom:11px;border:1px solid var(--border);}
-  .pay-section-title{font-size:.67rem;text-transform:uppercase;letter-spacing:.08em;color:var(--warm-gray);margin-bottom:9px;}
-  .pay-cols{display:grid;grid-template-columns:1fr 1fr;gap:9px;}
-  .pay-col-title{font-size:.69rem;font-weight:500;margin-bottom:5px;}
-  .pay-col-title.card{color:var(--blue);}.pay-col-title.cash{color:#3d7a55;}
-  .pay-sub{font-size:.61rem;color:var(--warm-gray);margin-bottom:2px;margin-top:4px;}
-  .pay-input{width:100%;padding:5px 8px;border:1px solid var(--border);border-radius:5px;font-family:'DM Mono',monospace;font-size:.78rem;background:white;color:var(--dark);outline:none;}
-  .pay-input:focus{border-color:var(--gold);}
-  .pay-total-row{margin-top:9px;padding-top:7px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
-  .pay-total-label{font-size:.66rem;text-transform:uppercase;letter-spacing:.07em;color:var(--warm-gray);}
-  .pay-total-val{font-family:'DM Mono',monospace;font-size:.98rem;font-weight:500;color:var(--dark);}
-  .empty-state{text-align:center;padding:32px 20px;color:var(--warm-gray);}
-  /* LOGIN SCREEN */
-  #login-screen{position:fixed;inset:0;background:var(--dark);z-index:999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:24px;}
-  #login-screen.hidden{display:none;}
-  .login-tower svg{opacity:.15;}
-  .login-title{font-family:'Playfair Display',serif;font-size:2rem;color:var(--cream);text-align:center;line-height:1.3;}
-  .login-title span{color:var(--gold);font-style:italic;}
-  .login-subtitle{font-size:.78rem;color:var(--gold-light);letter-spacing:.12em;text-transform:uppercase;}
-  .login-btn{display:flex;align-items:center;gap:10px;background:white;color:#333;border:none;padding:12px 28px;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:.9rem;font-weight:500;cursor:pointer;transition:all .2s;box-shadow:0 2px 12px rgba(0,0,0,.3);}
-  .login-btn:hover{transform:translateY(-2px);box-shadow:0 4px 20px rgba(0,0,0,.4);}
-  .login-btn svg{width:20px;height:20px;}
-  .login-note{font-size:.68rem;color:rgba(245,240,232,.4);text-align:center;max-width:280px;line-height:1.6;}
-  .empty-icon{font-size:1.9rem;margin-bottom:6px;}
-  .empty-state p{font-size:.8rem;}
-  .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--dark);color:var(--cream);padding:8px 17px;border-radius:8px;font-size:.77rem;z-index:999;transition:transform .3s ease;pointer-events:none;}
-  .toast.show{transform:translateX(-50%) translateY(0);}
+.page-nav { display:flex; justify-content:space-between; align-items:center; padding: 32px 0; border-top: 1px solid var(--border); margin-top: 60px; }
+.page-nav-btn { display:flex; align-items:center; gap:8px; font-size: 0.72rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-light); cursor:pointer; background:none; border:none; transition: color 0.2s; padding: 8px 0; font-family: "Jost", sans-serif; }
+.page-nav-btn:hover { color: var(--gold); }
+.page-nav-date { font-family: "DM Mono", monospace; font-size: 0.78rem; color: var(--ink-light); text-align:center; }
 </style>
 </head>
 <body>
 
-<!-- LOGIN SCREEN -->
-<div id="login-screen">
-  <div class="login-tower">
-    <svg viewBox="0 0 80 120" width="60" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M40 2 L28 40 L20 40 L18 48 L28 48 L22 80 L14 80 L12 88 L30 88 L28 110 L36 110 L36 120 L44 120 L44 110 L52 110 L50 88 L68 88 L66 80 L58 80 L52 48 L62 48 L60 40 L52 40 Z" fill="white"/>
-      <path d="M26 40 L40 2 L54 40" stroke="white" stroke-width="1.5" fill="none"/>
-      <path d="M22 80 L40 48 L58 80" stroke="white" stroke-width="1.5" fill="none"/>
-      <line x1="20" y1="56" x2="60" y2="56" stroke="white" stroke-width="1"/>
-      <line x1="18" y1="64" x2="62" y2="64" stroke="white" stroke-width="1"/>
-      <line x1="22" y1="72" x2="58" y2="72" stroke="white" stroke-width="1"/>
-    </svg>
+<nav>
+  <div class="nav-logo">Paris <em>2026</em> · Bon Voyage</div>
+  <div class="nav-links">
+    <a href="#itinerary">行程</a>
+    <div class="nav-dot"></div>
+    <a href="#reservations">預約</a>
+    <div class="nav-dot"></div>
+    <a href="#tips-section">攻略</a>
   </div>
-  <div>
-    <div class="login-title">Paris <span>2026</span> ✦<br>Mon Voyage</div>
-    <div class="login-subtitle" style="text-align:center;margin-top:6px;">May 10 – May 25</div>
+</nav>
+
+<section class="hero">
+  <img class="hero-tower" src="data:image/png;base64,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" alt="" style="width:280px;height:auto;">
+  <div class="hero-eyebrow">Bon Voyage</div>
+  <h1 class="hero-title">Paris<br><em>2026</em></h1>
+  <p class="hero-subtitle">Un voyage inoubliable</p>
+  <div class="hero-meta">
+    <div class="hero-meta-item"><span class="hero-meta-num">16</span><span>天</span></div>
+    <div class="hero-divider"></div>
+    <div class="hero-meta-item"><span class="hero-meta-num">5/10</span><span>出發</span></div>
+    <div class="hero-divider"></div>
+    <div class="hero-meta-item"><span class="hero-meta-num">5/25</span><span>返程</span></div>
+    <div class="hero-divider"></div>
+    <div class="hero-meta-item"><span class="hero-meta-num">14</span><span>個預約</span></div>
   </div>
-  <button class="login-btn" onclick="signInWithGoogle()">
-    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-      <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
-      <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
-      <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/>
-      <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
-    </svg>
-    使用 Google 帳號登入
-  </button>
-  <div class="login-note">僅限授權帳號登入<br>Authorized access only</div>
+</section>
+
+<div style="border-top: 1px solid var(--border);"></div>
+
+<div class="section" id="itinerary">
+  <div class="section-label">Itinéraire</div>
+  <h2 class="section-title">完整行程 <em>Day by Day</em></h2>
+  <div class="trip-strip" id="day-strip"></div>
+  <div id="day-details"></div>
 </div>
 
-<!-- SYNC STATUS -->
-<div id="sync-bar">
-  <span class="sync-dot"></span>
-  <span id="sync-msg">正在連線 Firebase...</span>
+<!-- RESERVATIONS SECTION -->
+<div style="border-top: 1px solid var(--border);"></div>
+<div class="section" id="reservations">
+  <div class="section-label">Réservations</div>
+  <h2 class="section-title">預約一覽 <em>Bookings</em></h2>
+  <div id="reservations-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px;"></div>
 </div>
 
-<header>
-  <!-- Eiffel Tower decorative SVG -->
-  <svg viewBox="0 0 80 120" style="position:absolute;right:320px;top:0;height:100%;opacity:.07;pointer-events:none;" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <path d="M40 2 L28 40 L20 40 L18 48 L28 48 L22 80 L14 80 L12 88 L30 88 L28 110 L36 110 L36 120 L44 120 L44 110 L52 110 L50 88 L68 88 L66 80 L58 80 L52 48 L62 48 L60 40 L52 40 Z" fill="white"/>
-    <path d="M26 40 L40 2 L54 40" stroke="white" stroke-width="1.5" fill="none"/>
-    <path d="M22 80 L40 48 L58 80" stroke="white" stroke-width="1.5" fill="none"/>
-    <line x1="20" y1="56" x2="60" y2="56" stroke="white" stroke-width="1"/>
-    <line x1="18" y1="64" x2="62" y2="64" stroke="white" stroke-width="1"/>
-    <line x1="22" y1="72" x2="58" y2="72" stroke="white" stroke-width="1"/>
-  </svg>
-  <div class="header-left">
-    <h1>Paris <span>2026</span> ✦ Mon Voyage</h1>
-    <p>May 10 – May 25 &nbsp;·&nbsp; 16 Days in France</p>
-  </div>
-  <div class="header-right">
-    <button class="nav-btn active" onclick="showTab('calendar',this)">📅 行程</button>
-    <button class="nav-btn" onclick="showTab('tickets',this)">🎫 預約</button>
-    <button class="nav-btn" onclick="showTab('expenses',this)">💶 花費</button>
-    <button class="export-btn" onclick="exportAll()">⬇ 匯出 Excel</button>
-    <button class="export-btn" onclick="signOut()" style="border-color:rgba(196,119,106,.5);color:#f0a898;">⏏ 登出</button>
-  </div>
-</header>
-
-<main>
-  <!-- CALENDAR TAB -->
-  <div id="tab-calendar" class="tab-section active">
-    <div class="calendar-header">
-      <div class="calendar-month">
-        <button class="cal-nav" onclick="prevMonth()">‹</button>
-        <span id="cal-month-label">May 2026</span>
-        <button class="cal-nav" onclick="nextMonth()">›</button>
-      </div>
-      <div style="display:flex;gap:8px;align-items:center;">
-        <div class="view-toggle">
-          <button class="view-btn active" id="vbtn-cal" onclick="switchView('cal')">📅 月曆</button>
-          <button class="view-btn" id="vbtn-list" onclick="switchView('list')">☰ 清單</button>
-        </div>
-        <button class="panel-add-btn" onclick="openEventModal(null)">＋ 新增行程</button>
-      </div>
-    </div>
-    <div id="view-cal">
-      <div class="calendar-grid" id="cal-headers"></div>
-      <div class="calendar-grid" id="cal-grid"></div>
-    </div>
-    <div id="view-list" style="display:none;">
-      <div id="list-view-content"></div>
-    </div>
-  </div>
-
-  <!-- TICKETS TAB -->
-  <div id="tab-tickets" class="tab-section">
-    <div class="section-title">🎫 博物館預約</div>
-    <div class="tickets-grid" id="tickets-grid"></div>
-    <button class="add-ticket-btn" onclick="openTicketModal(null)">
-      <span class="plus">＋</span>新增預約
-    </button>
-  </div>
-
-  <!-- EXPENSES TAB -->
-  <div id="tab-expenses" class="tab-section">
-    <div class="section-title">💶 花費記錄</div>
-    <div class="expense-layout">
-      <div>
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:11px;flex-wrap:wrap;gap:6px;">
-          <div style="display:flex;gap:5px;flex-wrap:wrap;">
-            <select id="expense-filter-cat" onchange="renderExpenses()" style="padding:5px 8px;border:1px solid var(--border);border-radius:5px;font-size:.72rem;background:white;color:var(--dark);font-family:'DM Sans',sans-serif;">
-              <option value="">所有分類</option>
-              <option value="機票">✈ 機票</option><option value="住宿">🏨 住宿</option>
-              <option value="景點">🎫 景點</option><option value="交通">🚇 交通</option>
-              <option value="餐飲">🍽 餐飲</option><option value="購物">🛍 購物</option>
-              <option value="其他">• 其他</option>
-            </select>
-            <select id="expense-filter-pay" onchange="renderExpenses()" style="padding:5px 8px;border:1px solid var(--border);border-radius:5px;font-size:.72rem;background:white;color:var(--dark);font-family:'DM Sans',sans-serif;">
-              <option value="">所有付款</option>
-              <option value="card">💳 刷卡</option><option value="cash">💵 現金</option><option value="mix">🔀 混合</option>
-            </select>
-            <select id="expense-filter-day" onchange="renderExpenses()" style="padding:5px 8px;border:1px solid var(--border);border-radius:5px;font-size:.72rem;background:white;color:var(--dark);font-family:'DM Sans',sans-serif;">
-              <option value="">所有日期</option>
-            </select>
-          </div>
-          <button class="panel-add-btn" onclick="openExpenseModal(null)">＋ 新增花費</button>
-        </div>
-        <div class="expense-table-wrap">
-          <table>
-            <thead><tr>
-              <th>日期</th><th>項目</th><th>分類</th><th>付款</th>
-              <th>刷卡 €</th><th>現金 €</th><th>總額 €</th><th>TWD</th><th></th>
-            </tr></thead>
-            <tbody id="expense-tbody"></tbody>
-          </table>
-        </div>
-      </div>
-      <div class="expense-sidebar">
-        <div class="exchange-box">
-          <div class="exch-label">匯率 Exchange Rate</div>
-          <div class="exch-rate">1 € = <input type="number" id="exch-rate" value="35" min="1" onchange="renderExpenses()"> TWD</div>
-        </div>
-        <div class="sum-cards">
-          <div class="sum-card">
-            <div class="sum-card-label">💳 刷卡</div>
-            <div class="sum-card-eur" id="sum-card-eur">€ 0</div>
-            <div class="sum-card-twd" id="sum-card-twd">NT$ 0</div>
-          </div>
-          <div class="sum-card card-cash">
-            <div class="sum-card-label">💵 現金</div>
-            <div class="sum-card-eur" id="sum-cash-eur">€ 0</div>
-            <div class="sum-card-twd" id="sum-cash-twd">NT$ 0</div>
-          </div>
-        </div>
-        <div class="sum-total-card">
-          <div class="sum-total-label">✦ 支出總額</div>
-          <div class="sum-total-eur" id="sum-total-eur">€ 0</div>
-          <div class="sum-total-twd" id="sum-total-twd">NT$ 0</div>
-        </div>
-        <div class="bar-chart">
-          <div class="bar-chart-title">各分類支出</div>
-          <div id="bar-chart-content"></div>
-          <div style="display:flex;gap:10px;margin-top:8px;font-size:.6rem;color:var(--warm-gray);">
-            <span><span style="display:inline-block;width:9px;height:9px;background:var(--blue);opacity:.7;border-radius:2px;margin-right:2px;"></span>刷卡</span>
-            <span><span style="display:inline-block;width:9px;height:9px;background:var(--sage);opacity:.7;border-radius:2px;margin-right:2px;"></span>現金</span>
-          </div>
-        </div>
-        <!-- EXPORT -->
-        <div class="export-panel">
-          <div class="export-title">匯出 Export</div>
-          <div class="export-grid">
-            <button class="export-item-btn" onclick="exportExpenses()">
-              <span class="ei-icon">💶</span><span>花費明細</span>
-            </button>
-            <button class="export-item-btn" onclick="exportItinerary()">
-              <span class="ei-icon">📅</span><span>行程表</span>
-            </button>
-            <button class="export-item-btn" onclick="exportTickets()">
-              <span class="ei-icon">🎫</span><span>預約紀錄</span>
-            </button>
-            <button class="export-item-btn" onclick="exportSummary()">
-              <span class="ei-icon">📊</span><span>分類統計</span>
-            </button>
-          </div>
-          <button class="export-all-btn" onclick="exportAll()">⬇ 一鍵匯出全部（Excel）</button>
-        </div>
-      </div>
-    </div>
-  </div>
-</main>
-
-<!-- DETAIL PANEL -->
-<div class="detail-panel" id="detail-panel">
-  <div class="panel-header">
-    <div class="panel-date" id="panel-date">—</div>
-    <button class="panel-close" onclick="closePanel()">×</button>
-  </div>
-  <div id="panel-hotel"></div>
-  <div class="event-list" id="panel-events"></div>
-  <button class="panel-add-btn" id="panel-add-btn">＋ 新增行程</button>
+<!-- TIPS SECTION -->
+<div style="border-top: 1px solid var(--border);"></div>
+<div class="section" id="tips-section">
+  <div class="section-label">Conseils</div>
+  <h2 class="section-title">旅遊攻略 <em>Travel Tips</em></h2>
+  <div id="all-tips-grid" style="display:flex;flex-direction:column;gap:32px;"></div>
 </div>
-
-<!-- EVENT MODAL -->
-<div class="modal-overlay" id="event-modal">
-  <div class="modal">
-    <div class="modal-title" id="event-modal-title">新增行程</div>
-    <div class="form-row">
-      <div class="form-group"><label>日期</label><input type="date" id="ev-date"></div>
-      <div class="form-group"><label>時段</label>
-        <select id="ev-slot">
-          <option value="morning">☀ 早上</option><option value="afternoon">🌤 下午</option>
-          <option value="evening">🌙 晚上</option><option value="note">📝 備注</option>
-        </select>
-      </div>
-    </div>
-    <div class="form-group"><label>景點名稱</label><input type="text" id="ev-name" placeholder="e.g. 羅浮宮"></div>
-    <div class="form-group"><label>時間 (optional)</label><input type="text" id="ev-time" placeholder="e.g. 14:00"></div>
-    <div class="form-group"><label>Google Maps 連結</label><input type="url" id="ev-maps" placeholder="https://maps.google.com/..."></div>
-    <div class="form-group"><label>備注</label><textarea id="ev-note" rows="2" placeholder="需要預約 / 注意事項..."></textarea></div>
-    <div class="modal-footer">
-      <button class="btn-cancel" onclick="closeEventModal()">取消</button>
-      <button class="btn-primary" onclick="saveEvent()">儲存</button>
-    </div>
-  </div>
-</div>
-
-<!-- TICKET MODAL -->
-<div class="modal-overlay" id="ticket-modal">
-  <div class="modal">
-    <div class="modal-title">預約紀錄</div>
-    <div class="form-group"><label>景點名稱</label><input type="text" id="tk-name" placeholder="e.g. Musée d'Orsay"></div>
-    <div class="form-row">
-      <div class="form-group"><label>日期</label><input type="date" id="tk-date"></div>
-      <div class="form-group"><label>時間</label><input type="time" id="tk-time"></div>
-    </div>
-    <div class="form-row">
-      <div class="form-group"><label>人數</label><input type="number" id="tk-people" value="2" min="1"></div>
-      <div class="form-group"><label>狀態</label>
-        <select id="tk-status">
-          <option value="pending">⏳ 待確認</option>
-          <option value="confirmed">✅ 已確認</option>
-          <option value="used">✔ 已使用</option>
-        </select>
-      </div>
-    </div>
-    <div class="form-group"><label>預約號碼</label><input type="text" id="tk-ref" placeholder="e.g. LVR-2026-XXXX"></div>
-    <div class="form-group"><label>備注</label><textarea id="tk-note" rows="2" placeholder="入場規定、注意事項..."></textarea></div>
-    <div class="form-group">
-      <label>📂 相關檔案（Google Drive 連結）</label>
-      <input type="url" id="tk-fileurl" placeholder="https://drive.google.com/...">
-      <div style="font-size:.62rem;color:var(--warm-gray);margin-top:4px;">上傳 PDF 到 Google Drive → 右鍵「取得連結」→ 設定「知道連結的人可以檢視」→ 貼上</div>
-    </div>
-
-    <div class="modal-footer">
-      <button class="btn-cancel" onclick="closeTicketModal()">取消</button>
-      <button class="btn-primary" onclick="saveTicket()">儲存</button>
-    </div>
-  </div>
-</div>
-
-<!-- EXPENSE MODAL -->
-<div class="modal-overlay" id="expense-modal">
-  <div class="modal">
-    <div class="modal-title">花費記錄</div>
-    <div class="form-group"><label>項目</label><input type="text" id="exp-name" placeholder="e.g. 羅浮宮門票"></div>
-    <div class="form-row">
-      <div class="form-group"><label>日期</label><input type="date" id="exp-date"></div>
-      <div class="form-group"><label>分類</label>
-        <select id="exp-cat">
-          <option value="機票">✈ 機票</option><option value="住宿">🏨 住宿</option>
-          <option value="景點">🎫 景點（含門票、導覽）</option><option value="交通">🚇 交通</option>
-          <option value="餐飲">🍽 餐飲</option><option value="購物">🛍 購物</option>
-          <option value="其他">• 其他</option>
-        </select>
-      </div>
-    </div>
-    <div class="pay-section">
-      <div class="pay-section-title">付款方式</div>
-      <div class="pay-cols">
-        <div>
-          <div class="pay-col-title card">💳 刷卡 Card</div>
-          <div class="pay-sub">金額 €</div>
-          <input class="pay-input" type="number" id="exp-card-eur" step="0.01" min="0" placeholder="0.00" oninput="syncPay('card-eur')">
-          <div class="pay-sub">折合 NT$</div>
-          <input class="pay-input" type="number" id="exp-card-twd" step="1" min="0" placeholder="自動換算" oninput="syncPay('card-twd')">
-        </div>
-        <div>
-          <div class="pay-col-title cash">💵 現金 Cash</div>
-          <div class="pay-sub">金額 €</div>
-          <input class="pay-input" type="number" id="exp-cash-eur" step="0.01" min="0" placeholder="0.00" oninput="syncPay('cash-eur')">
-          <div class="pay-sub">折合 NT$</div>
-          <input class="pay-input" type="number" id="exp-cash-twd" step="1" min="0" placeholder="自動換算" oninput="syncPay('cash-twd')">
-        </div>
-      </div>
-      <div class="pay-total-row">
-        <span class="pay-total-label">總額 Total</span>
-        <span class="pay-total-val" id="exp-total-display">€ 0.00</span>
-      </div>
-    </div>
-    <div class="form-group"><label>備注</label><input type="text" id="exp-note" placeholder="optional..."></div>
-    <div class="modal-footer">
-      <button class="btn-cancel" onclick="closeExpenseModal()">取消</button>
-      <button class="btn-primary" onclick="saveExpense()">儲存</button>
-    </div>
-  </div>
-</div>
-
-
-<div class="toast" id="toast"></div>
 
 <script>
-// ══════════════════════════════════════
-//  FIREBASE CONFIG + AUTH
-// ══════════════════════════════════════
-const firebaseConfig = {
-  apiKey: "AIzaSyB_lOmCtVXPrOrs30iEZrqh_jyWUeEfbHo",
-  authDomain: "prais-5121b.firebaseapp.com",
-  databaseURL: "https://prais-5121b-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "prais-5121b",
-  storageBucket: "prais-5121b.firebasestorage.app",
-  messagingSenderId: "1051122173263",
-  appId: "1:1051122173263:web:273b3907c59a4fd51cf13a"
-};
-firebase.initializeApp(firebaseConfig);
-const auth = firebase.auth();
-const db   = firebase.database();
-const ROOT = 'paris2026';
-const ALLOWED_EMAIL = 'anatoliachy@gmail.com';
-
-function signInWithGoogle() {
-  const provider = new firebase.auth.GoogleAuthProvider();
-  auth.signInWithPopup(provider).catch(err=>{
-    showToast('登入失敗，請再試一次');
-  });
-}
-
-function signOut() {
-  auth.signOut().then(()=>{
-    document.getElementById('login-screen').classList.remove('hidden');
-  });
-}
-
-auth.onAuthStateChanged(user=>{
-  if(user && user.email === ALLOWED_EMAIL){
-    document.getElementById('login-screen').classList.add('hidden');
-    initFirebase(user);
-  } else if(user) {
-    // Wrong account
-    auth.signOut();
-    showToast('此帳號無使用權限');
-  } else {
-    document.getElementById('login-screen').classList.remove('hidden');
+const DAYS = [
+  {
+    date:"5/10", dow:"Sun", label:"出發",
+    summary:"啟程！BR87 深夜班機，桃園二航出發，飛越大半個地球，向巴黎出發。",
+    slots:{
+      evening:[
+        {name:"✈ BR87 桃園二航出發", time:"23:30", note:"長榮航空，建議提早 3 小時到機場", maps:"https://maps.google.com/?q=Taiwan+Taoyuan+International+Airport"}
+      ]
+    },
+    tips:[], food:[], pass:false
+  },
+  {
+    date:"5/11", dow:"Mon", label:"抵達日",
+    summary:"踏上巴黎的第一步。沿著香榭麗舍大道漫步，遠眺凱旋門，走到戰神廣場感受艾菲爾鐵塔白天的壯麗。",
+    slots:{
+      morning:[{name:"抵達巴黎 CDG", time:"", note:"入住飯店，放行李", maps:"https://maps.google.com/?q=Charles+de+Gaulle+Airport"}],
+      afternoon:[
+        {name:"香榭麗舍大道", time:"", note:"漫步世界最美大道", maps:"https://maps.google.com/?q=Champs+Elysees+Paris"},
+        {name:"凱旋門（外觀）", time:"", note:"", maps:"https://maps.google.com/?q=Arc+de+Triomphe+Paris"},
+        {name:"戰神廣場", time:"", note:"", maps:"https://maps.google.com/?q=Champ+de+Mars+Paris"},
+        {name:"艾菲爾鐵塔（白天外觀）", time:"", note:"感受鐵塔的震撼", maps:"https://maps.google.com/?q=Eiffel+Tower+Paris"}
+      ]
+    },
+    tips:[], food:[
+      {type:"咖啡館", name:"Café de Flore", desc:"巴黎最知名的老咖啡館，沙特、波伏娃的常駐聖地。", price:"咖啡 €5–8"},
+      {type:"小酒館", name:"Le Petit Bal Perdu", desc:"午間套餐推薦，19€ 兩道、25€ 三道，份量大且評價好。", price:"€19–25"},
+      {type:"平價法餐", name:"Bouillon Pigalle", desc:"連鎖平價法餐，菜色道地、氣氛熱鬧，常要排隊。", price:"主菜 €10–16"}
+    ], pass:false
+  },
+  {
+    date:"5/12", dow:"Tue", label:"蒙馬特",
+    summary:"從藝術殿堂巴黎歌劇院開始，走進拉法葉的美麗穹頂，下午沿石板路爬上蒙馬特高地，在聖心堂感受巴黎的靈魂，傍晚紅磨坊的霓虹點亮夜色。",
+    slots:{
+      morning:[
+        {name:"Starbucks", time:"", note:"出發前咖啡補給", maps:""},
+        {name:"巴黎歌劇院 Palais Garnier", time:"10:30", note:"《歌劇魅影》靈感地，已買票 ✦ 夏卡爾穹頂畫必看", maps:"https://maps.google.com/?q=Opera+Garnier+Paris"},
+        {name:"拉法葉百貨 奧斯曼旗艦店", time:"", note:"主館 Coupole 5F 找 GUCCI 童裝旁 LE CONCIERGE 禮賓部 · 長榮旅客滿 650€ 送 Diptyque", maps:"https://maps.google.com/?q=Galeries+Lafayette+Paris+Haussmann"},
+        {name:"和平咖啡館 Café de la Paix", time:"", note:"歌劇院旁百年老咖啡館", maps:"https://maps.google.com/?q=Cafe+de+la+Paix+Paris"},
+        {name:"春天百貨 Printemps", time:"", note:"", maps:"https://maps.google.com/?q=Printemps+Paris"}
+      ],
+      afternoon:[
+        {name:"蒙馬特 Montmartre", time:"", note:"建議從 Blanche 站出發 → 紅磨坊 → 愛牆 → La Maison Rose → 聖心堂 → Anvers 站，不走回頭路", maps:"https://maps.google.com/?q=Montmartre+Paris"},
+        {name:"愛牆 Le Mur des Je t'aime", time:"", note:"Abbesses 站出口即到", maps:"https://maps.google.com/?q=Le+Mur+des+Je+t+aime+Paris"},
+        {name:"La Maison Rose", time:"", note:"蒙馬特最上鏡粉紅小屋", maps:"https://maps.google.com/?q=La+Maison+Rose+Montmartre"},
+        {name:"聖心堂 Sacré-Cœur", time:"", note:"免費入場，可俯瞰巴黎全景 · 內有世界最大馬賽克壁畫", maps:"https://maps.google.com/?q=Sacre+Coeur+Montmartre"}
+      ],
+      evening:[
+        {name:"紅磨坊 Moulin Rouge", time:"", note:"外觀打卡，霓虹燈亮起最迷人 · 注意治安，建議 Uber 回程", maps:"https://maps.google.com/?q=Moulin+Rouge+Paris"}
+      ]
+    },
+    tips:[], food:[
+      {type:"早餐/甜點", name:"Angelina", desc:"法國最著名熱可可與蒙布朗，本店在里沃利大街。", price:"熱可可 €9"},
+      {type:"蒙馬特", name:"La Maison Rose", desc:"蒙馬特最上鏡的粉紅色小屋周邊餐廳。", price:"€15–25"},
+      {type:"平價法餐", name:"Bouillon Pigalle", desc:"蒙馬特山腳下，平價道地法餐，常要排隊。", price:"主菜 €10–16"}
+    ], pass:false
+  },
+  {
+    date:"5/13", dow:"Wed", label:"通行證 Day 1",
+    summary:"博物館通行證第一天。從當代藝術新地標皮諾美術館啟程，在 Angelina 補充能量後，下午走入羅浮宮的藝術迷宮，傍晚在杜樂麗公園的夕陽下放鬆漫步。",
+    slots:{
+      morning:[
+        {name:"皮諾美術館 Bourse de Commerce", time:"", note:"安藤忠雄改建的圓形清水模空間，古典穹頂與現代藝術的絕妙碰撞", maps:"https://maps.google.com/?q=Bourse+de+Commerce+Pinault+Paris"},
+        {name:"Happy Cafe / Angelina", time:"", note:"Angelina 推薦蒙布朗 + 熱可可", maps:"https://maps.google.com/?q=Angelina+Paris+Rivoli"}
+      ],
+      afternoon:[
+        {name:"羅浮宮 Musée du Louvre", time:"14:00", note:"已預約 ✦ 建議走 Carrousel du Louvre 地下入口（99 rue de Rivoli）· 必看：蒙娜麗莎、勝利女神、斷臂維納斯", maps:"https://maps.google.com/?q=Louvre+Museum+Paris"},
+        {name:"杜樂麗公園 Jardin des Tuileries", time:"", note:"羅浮宮旁的法式幾何花園，適合散步收尾", maps:"https://maps.google.com/?q=Tuileries+Garden+Paris"}
+      ]
+    },
+    tips:[
+      {icon:"🗺️", title:"羅浮宮精華速通路線（2–3小時）", content:"① 德農館 Denon：《勝利女神》0層→《蒙娜麗莎》1層711廳（開門即衝，人最少）→《拿破崙加冕禮》紅廳（可借對面大鏡子拍反光合照）<br>② 敘利館 Sully：《斷臂維納斯》0層346廳→《漢謨拉比法典》0層227廳<br>③ 黎塞留館 Richelieu（有餘再去）：拿破崙三世套房 1層544廳"},
+      {icon:"📸", title:"羅浮宮拍照 & 避坑", content:"玻璃金字塔最佳機位在鐵門外，可拍出層次感 · Café Richelieu（德農館1層）有落地窗看金字塔 · 地下 Food Court 人均 €10 吃飽再戰 · 警惕兜售「快速通道票」的假冒人員"},
+      {icon:"👟", title:"實用提醒", content:"穿最舒服的鞋 · 大背包必須寄存 · 建議走 Carrousel du Louvre 地下入口避開人潮"}
+    ], food:[
+      {type:"咖啡甜點", name:"Angelina", desc:"里沃利大街本店，蒙布朗與熱可可是招牌，氣氛優雅。", price:"€10–15"},
+      {type:"法式小酒館", name:"Le Petit Bal Perdu", desc:"午間套餐 19€ 兩道、25€ 三道，份量大、評價好。", price:"€19–25"},
+      {type:"平價法餐", name:"Bouillon République", desc:"連鎖平價法餐，菜色道地，可線上預約。", price:"主菜 €10–15"}
+    ], pass:true
+  },
+  {
+    date:"5/14", dow:"Thu", label:"通行證 Day 2",
+    summary:"博物館通行證第二天。從 Pierre Hermé 的精緻馬卡龍開啟甜蜜早晨，在花神咖啡館感受左岸文人氣息，穿越羅丹的雕塑花園，最後在奧賽美術館沉浸於印象派的璀璨光影。",
+    slots:{
+      morning:[
+        {name:"LE CAFÉ PIERRE HERMÉ", time:"", note:"馬卡龍大師的咖啡館，必點馬卡龍", maps:"https://maps.google.com/?q=Pierre+Herme+Paris"},
+        {name:"羅丹美術館 Musée Rodin", time:"", note:"花園裡的《沉思者》《地獄之門》不可錯過 · 氣氛寧靜浪漫", maps:"https://maps.google.com/?q=Musee+Rodin+Paris"},
+        {name:"傷兵院 Les Invalides", time:"", note:"拿破崙長眠之地，金色穹頂是巴黎天際線標誌", maps:"https://maps.google.com/?q=Les+Invalides+Paris"}
+      ],
+      afternoon:[
+        {name:"花神咖啡館 Café de Flore", time:"", note:"沙特、波伏娃的常駐聖地，左岸文化象徵", maps:"https://maps.google.com/?q=Cafe+de+Flore+Paris"},
+        {name:"奧賽美術館 Musée d\'Orsay", time:"16:00", note:"已預約 ✦ 建議先衝 5F：梵谷、莫內、雷諾瓦 → 2F 羅丹 → 0F 米勒《拾穗》· 大時鐘打卡必拍", maps:"https://maps.google.com/?q=Musee+d+Orsay+Paris"}
+      ]
+    },
+    tips:[
+      {icon:"🗺️", title:"奧賽推薦路線（2–3 小時）", content:"進門 → 直上 5F（精華 1.5h）：梵谷《自畫像》《羅納河上的星夜》→ 莫內《睡蓮》系列 → 雷諾瓦《煎餅磨坊的舞會》→ 馬奈《草地上的午餐》→ 大鐘窗打卡 → 2F（40min）：羅丹《沉思者》、竇加《十四歲的小舞者》→ 底層（30min）：米勒《拾穗者》"},
+      {icon:"📸", title:"奧賽拍照機位", content:"① 5F 大鐘窗：鐵塔同框 ② 主廳拱形玻璃頂全景 ③ 《煎餅磨坊的舞會》斜對角長椅「畫中畫」 ④ 2F 側窗：塞納河 + 羅浮宮景"},
+      {icon:"⚠️", title:"注意事項", content:"塞納河畔側門比較沒人，建議從此入場 · 近期維修中入口較混亂，有預約者走河岸新門，請確認自己的入場方式再排隊"}
+    ], food:[
+      {type:"甜點", name:"Pierre Hermé", desc:"全球最著名的馬卡龍，多種口味令人難以抉擇。", price:"馬卡龍 €2.5 起"},
+      {type:"左岸咖啡", name:"Café de Flore", desc:"巴黎文學咖啡館代表，沙特常來的地方。", price:"咖啡 €5–8"},
+      {type:"小酒館", name:"Bistrot Paul Bert", desc:"11 區，巴黎最道地的小酒館，招牌牛排薯條與舒芙蕾。", price:"€35–50"}
+    ], pass:true
+  },
+  {
+    date:"5/15", dow:"Fri", label:"通行證 Day 3",
+    summary:"博物館通行證第三天。以巴黎聖母院的重生之美開啟一天，攀上鐘樓俯瞰巴黎，穿越莎士比亞書店的文學氣息，在西堤島深處發現彩繪玻璃的奇蹟聖禮拜堂，最後以越南河粉收尾。",
+    slots:{
+      morning:[
+        {name:"巴黎聖母院 Notre-Dame", time:"", note:"哥德式建築經典，修復重開 · 彌撒時段可免費入場", maps:"https://maps.google.com/?q=Notre+Dame+Cathedral+Paris"},
+        {name:"聖母院鐘樓 Tours Notre-Dame", time:"10:45", note:"已預約 ✦ 登頂可看怪獸雕像與巴黎全景", maps:"https://maps.google.com/?q=Notre+Dame+Cathedral+Paris"},
+        {name:"莎士比亞書店 Shakespeare and Company", time:"", note:"巴黎最知名英文書店，文學聖地", maps:"https://maps.google.com/?q=Shakespeare+and+Company+Paris"},
+        {name:"可麗餅店", time:"", note:"書店附近覓食", maps:"https://maps.google.com/?q=Creperie+Paris+5eme"},
+        {name:"Le Petit Prince", time:"", note:"小王子主題店", maps:"https://maps.google.com/?q=Le+Petit+Prince+Paris"}
+      ],
+      afternoon:[
+        {name:"巴黎古監獄 Conciergerie", time:"13:00", note:"已預約 ✦ 瑪麗·安東尼皇后的囚室，法國大革命歷史", maps:"https://maps.google.com/?q=Conciergerie+Paris"},
+        {name:"聖徒禮拜堂 Sainte-Chapelle", time:"16:00", note:"已預約 ✦ 15 扇彩繪玻璃窗，含 1113 個聖經場景，光線最美", maps:"https://maps.google.com/?q=Sainte+Chapelle+Paris"}
+      ],
+      evening:[
+        {name:"pho 5", time:"", note:"越南河粉，份量大、CP 值高", maps:"https://maps.google.com/?q=Pho+5+Paris"}
+      ]
+    },
+    tips:[], food:[
+      {type:"書店旁", name:"Le Petit Châtelet", desc:"莎士比亞書店旁，法式料理，地點絕佳。", price:"€20–35"},
+      {type:"越南料理", name:"Pho 5", desc:"巴黎人氣越南河粉，份量大、價格實惠。", price:"€10–14"},
+      {type:"甜點", name:"Berthillon", desc:"西堤島上的知名冰淇淋，在地人必朝聖。", price:"球 €3 起"}
+    ], pass:true
+  },
+  {
+    date:"5/16", dow:"Sat", label:"通行證 Day 4",
+    summary:"博物館通行證第四天。上午沉浸在雅克馬爾安德烈的私人宮殿，下午走到戰神廣場，在建築與遺產城的大窗前與艾菲爾鐵塔合影，傍晚登上鐵塔迎接巴黎最浪漫的夜晚。",
+    slots:{
+      morning:[
+        {name:"雅克馬爾－安德烈博物館", time:"", note:"19 世紀豪宅改建，義大利文藝復興藏品豐富，冬季花園打卡", maps:"https://maps.google.com/?q=Musee+Jacquemart+Andre+Paris"},
+        {name:"Café Jacquemart-André", time:"", note:"博物館內咖啡館，天花板壁畫絕美，必點下午茶", maps:"https://maps.google.com/?q=Cafe+Jacquemart+Andre+Paris"}
+      ],
+      afternoon:[
+        {name:"戰神廣場 Champ de Mars", time:"", note:"艾菲爾鐵塔正面草坪，適合野餐", maps:"https://maps.google.com/?q=Champ+de+Mars+Paris"},
+        {name:"建築與遺產城 Cité de l\'Architecture", time:"16:00", note:"已預約 ✦ 世界最大建築博物館 · 透過巨窗拍鐵塔，建議早上光線較佳", maps:"https://maps.google.com/?q=Cite+de+l+Architecture+Paris"}
+      ],
+      evening:[
+        {name:"艾菲爾鐵塔 Tour Eiffel", time:"18:00", note:"已預約 ✦ 拍照推薦：Pont de Bir-Hakeim（電影感）、Trocadéro（正面）", maps:"https://maps.google.com/?q=Eiffel+Tower+Paris"}
+      ]
+    },
+    tips:[
+      {icon:"🚇", title:"地鐵 6 號線秘景", content:"Passy 站 → Bir-Hakeim 站：這段跨越塞納河，走在 Bir-Hakeim 橋上，車窗外就是艾菲爾鐵塔最經典的電影感視角。橋下層可步行拍照，是巴黎旅遊局推薦的必看景色。"},
+      {icon:"📸", title:"鐵塔拍照點整理", content:"Pont de Bir-Hakeim：結構感強、電影感最強 · Port Debilly：經典大景 · 建築與遺產城大窗：室內透窗拍 · Trocadéro：正面經典視角 · Café Lucy（人類博物館3F）：咖啡配鐵塔景"}
+    ], food:[
+      {type:"博物館咖啡", name:"Café Jacquemart-André", desc:"天花板壁畫絕美，午餐套餐或下午茶皆宜。", price:"下午茶 €20–30"},
+      {type:"鐵塔旁", name:"Café Lucy x Mozza & Co", desc:"人類博物館 3F，俯瞰鐵塔的咖啡館，咖啡約 €5。", price:"€5–15"},
+      {type:"備案", name:"凱旋門登頂 / 先賢祠", desc:"如有時間可加入，凱旋門頂有趣味 0 元紙鈔可取。", price:"各約 €13"}
+    ], pass:true
+  },
+  {
+    date:"5/17", dow:"Sun", label:"通行證 Day 5",
+    summary:"博物館通行證第五天，整日奉獻給太陽王的凡爾賽宮。鏡廳的璀璨金光、王后的玫瑰花園、阿波羅噴泉的宏偉氣勢，感受法國王室最鼎盛的榮耀。",
+    slots:{
+      morning:[
+        {name:"凡爾賽宮 Château de Versailles", time:"10:00", note:"已預約 ✦ 整日行程 · 必看：鏡廳、國王大套房、王后套房、阿波羅噴泉", maps:"https://maps.google.com/?q=Palace+of+Versailles"}
+      ],
+      afternoon:[
+        {name:"凡爾賽花園 Jardins de Versailles", time:"", note:"法式幾何花園 · 週末有噴泉音樂秀（需另購票）", maps:"https://maps.google.com/?q=Jardins+de+Versailles"},
+        {name:"大特里亞農宮 Grand Trianon", time:"", note:"宮殿旁的粉紅色小宮殿，相對寧靜", maps:"https://maps.google.com/?q=Grand+Trianon+Versailles"}
+      ]
+    },
+    tips:[], food:[
+      {type:"宮殿內", name:"Angelina Versailles", desc:"凡爾賽宮內的 Angelina 分店，氣氛絕佳。", price:"€10–20"},
+      {type:"附近", name:"Gordon Ramsay au Trianon", desc:"凡爾賽宮園區內的高端餐廳，需提前預約。", price:"€80+"}
+    ], pass:true
+  },
+  {
+    date:"5/18", dow:"Mon", label:"通行證 Day 6",
+    summary:"博物館通行證最後一天。換飯店後，在協和廣場感受歷史的重量，橘園美術館的莫內睡蓮環繞全身，海軍府重現 18 世紀奢華，塞納河遊船看見巴黎最美的側臉，以 Margaux 晚餐完美收尾。",
+    slots:{
+      morning:[
+        {name:"換飯店", time:"", note:"退房 Hotel Acropole → 入住 Terminus Orleans Hotel", maps:""},
+        {name:"協和廣場 Place de la Concorde", time:"", note:"法國大革命斷頭台所在地，埃及方尖碑地標", maps:"https://maps.google.com/?q=Place+de+la+Concorde+Paris"},
+        {name:"亞歷山大三世橋 Pont Alexandre III", time:"", note:"巴黎最美的橋，金色燈柱與鐵塔同框", maps:"https://maps.google.com/?q=Pont+Alexandre+III+Paris"}
+      ],
+      afternoon:[
+        {name:"橘園美術館 Musée de l\'Orangerie", time:"13:00", note:"已預約 ✦ 莫內《睡蓮》8 幅巨作環繞兩個橢圓展廳，沉浸式體驗先驅", maps:"https://maps.google.com/?q=Musee+de+l+Orangerie+Paris"},
+        {name:"海軍府 Hôtel de la Marine", time:"15:00", note:"已預約 ✦ 18 世紀奢華宮廷修復重開，3D 沉浸式音效導覽，協和廣場涼廊視角一流", maps:"https://maps.google.com/?q=Hotel+de+la+Marine+Paris"}
+      ],
+      evening:[
+        {name:"塞納河遊船 Croisière sur la Seine", time:"", note:"推薦 Bateaux Mouches 或 Bateaux Parisiens", maps:"https://maps.google.com/?q=Bateaux+Mouches+Paris"},
+        {name:"Margaux 餐廳", time:"21:00", note:"已預約 ✦ 晚餐", maps:"https://maps.google.com/?q=Restaurant+Margaux+Paris"}
+      ]
+    },
+    tips:[], food:[
+      {type:"橘園旁", name:"Café de l\'Orangerie", desc:"美術館內咖啡館，在莫內花園旁用餐。", price:"€10–18"},
+      {type:"晚餐", name:"Margaux", desc:"今晚預約好的餐廳，精緻法式料理。", price:"已預約"},
+      {type:"甜點", name:"Ladurée Champs-Élysées", desc:"馬卡龍百年老店，香榭麗舍旗艦店。", price:"馬卡龍 €2.5 起"}
+    ], pass:true
+  },
+  {
+    date:"5/19", dow:"Tue", label:"迪士尼",
+    summary:"童心大爆發的一天！巴黎迪士尼樂園，中午在皮克斯《料理鼠王》主題餐廳用餐，下午趕上遊行，夜晚煙火在天空中綻放，為巴黎之旅留下最閃亮的回憶。",
+    slots:{
+      morning:[{name:"迪士尼樂園 Disneyland Paris", time:"09:00", note:"已預約 ✦ 建議提早入場衝熱門設施", maps:"https://maps.google.com/?q=Disneyland+Paris"}],
+      afternoon:[
+        {name:"Bistrot Chez Rémy", time:"12:30", note:"已預約 ✦ 料理鼠王主題餐廳，場景精緻", maps:"https://maps.google.com/?q=Bistrot+Chez+Remy+Disneyland+Paris"},
+        {name:"園區遊行", time:"", note:"確認當日遊行時間", maps:""}
+      ],
+      evening:[{name:"迪士尼煙火秀", time:"", note:"確認當日煙火時間，提早卡好位置", maps:""}]
+    },
+    tips:[], food:[
+      {type:"主題餐廳", name:"Bistrot Chez Rémy", desc:"料理鼠王主題餐廳，場景精緻，已預約。", price:"已預約"},
+      {type:"園內", name:"Blue Lagoon Restaurant", desc:"加勒比海盜設施旁，氣氛絕佳的主題餐廳。", price:"€30–50"}
+    ], pass:false
+  },
+  {
+    date:"5/20", dow:"Wed", label:"聖米歇爾山 Day 1",
+    summary:"前往諾曼第，造訪被譽為「西方奇蹟」的聖米歇爾山。寄放行李後搭 TGV 前往雷恩，轉乘巴士抵達這座漂浮在海上的修道院孤島，傍晚退潮後的夕陽與夜景是今天最大的禮物。",
+    slots:{
+      morning:[
+        {name:"寄放行李 Nannybag", time:"", note:"約 €11.5，出發前確認店點", maps:"https://maps.google.com/?q=Paris+Montparnasse"},
+        {name:"Paris Montparnasse → Rennes", time:"10:57", note:"TGV，12:25 抵雷恩", maps:"https://maps.google.com/?q=Gare+Montparnasse+Paris"}
+      ],
+      afternoon:[
+        {name:"Rennes → 聖米歇爾山 巴士", time:"", note:"Keolis 巴士，班次不多請確認時刻表，約 €10", maps:"https://maps.google.com/?q=Rennes+Gare"},
+        {name:"飯店 Check in", time:"", note:"聖米歇爾山附近住宿", maps:"https://maps.google.com/?q=Mont+Saint+Michel"},
+        {name:"免費接駁車 → 聖米歇爾山", time:"", note:"或步行堤道，漲潮時格外壯觀", maps:"https://maps.google.com/?q=Mont+Saint+Michel+France"}
+      ],
+      evening:[{name:"聖米歇爾山夕陽 & 夜景", time:"", note:"住一晚最大優勢，避開白天人潮，夜晚燈光下的修道院極美", maps:"https://maps.google.com/?q=Mont+Saint+Michel"}]
+    },
+    tips:[], food:[
+      {type:"當地名物", name:"La Mère Poulard", desc:"聖米歇爾山百年名店，獨特蓬鬆歐姆蛋，是必試的在地體驗。", price:"€20–30"},
+      {type:"布列塔尼", name:"Galettes & Crêpes", desc:"布列塔尼傳統可麗餅，雷恩或山上均可找到。", price:"€8–15"}
+    ], pass:false
+  },
+  {
+    date:"5/21", dow:"Thu", label:"聖米歇爾山 Day 2",
+    summary:"清晨日出後，走進修道院感受神聖的「奇蹟院」迴廊。退房後搭巴士回雷恩，傍晚返回巴黎，換到最後一間飯店，晚上逛逛 Le Bon Marché 樂蓬馬歇。",
+    slots:{
+      morning:[
+        {name:"清晨日出", time:"", note:"住一晚的最大福利，獨享清晨靜謐的修道院", maps:"https://maps.google.com/?q=Mont+Saint+Michel"},
+        {name:"修道院 Abbaye du Mont Saint-Michel", time:"", note:"必看：奇蹟院迴廊（La Merveille）· 門票 €13", maps:"https://maps.google.com/?q=Abbaye+du+Mont+Saint+Michel"},
+        {name:"S 彎拍照點 Méandres", time:"", note:"D275, Pontorson 方向，可拍 S 彎、小河、羊群，進出農場門記得關門", maps:"https://maps.google.com/?q=Meandres+Mont+Saint+Michel"}
+      ],
+      afternoon:[
+        {name:"飯店退房 → 搭巴士回 Rennes", time:"", note:"回程巴士注意時間", maps:""},
+        {name:"Rennes → Paris Montparnasse", time:"15:35", note:"抵達後取行李，換 Terminus Orleans Hotel", maps:"https://maps.google.com/?q=Gare+Montparnasse+Paris"}
+      ],
+      evening:[{name:"Le Bon Marché 樂蓬馬歇", time:"", note:"巴黎最優雅的百貨，La Grande Épicerie 食品館必逛", maps:"https://maps.google.com/?q=Le+Bon+Marche+Paris"}]
+    },
+    tips:[], food:[
+      {type:"食品百貨", name:"La Grande Épicerie", desc:"樂蓬馬歇附設的頂級食品超市，買伴手禮的好地方。", price:"依選購"},
+      {type:"左岸", name:"Chez Janou", desc:"普羅旺斯風味，建議提前訂位。", price:"€25–40"}
+    ], pass:false
+  },
+  {
+    date:"5/22", dow:"Fri", label:"瑪黑區",
+    summary:"巴黎最有個性的街區等你來探索。從皮諾美術館出發，穿越19世紀的微微安拱廊，在紅孩兒市集覓食，深入瑪黑區的孚日廣場與獨立精品店，夜晚以傷兵院燈光秀畫下完美句點。",
+    slots:{
+      morning:[
+        {name:"皮諾美術館 Bourse de Commerce", time:"", note:"安藤忠雄圓柱空間，當代藝術展覽", maps:"https://maps.google.com/?q=Bourse+de+Commerce+Pinault"},
+        {name:"微微安拱廊 Galerie Vivienne", time:"", note:"19 世紀古典拱廊，地板馬賽克與玻璃穹頂極美", maps:"https://maps.google.com/?q=Galerie+Vivienne+Paris"}
+      ],
+      afternoon:[
+        {name:"雨果之家 Maison de Victor Hugo", time:"", note:"孚日廣場旁，《悲慘世界》作者故居，免費入場", maps:"https://maps.google.com/?q=Maison+de+Victor+Hugo+Paris"},
+        {name:"Marché des Enfants Rouges 紅孩兒市集", time:"", note:"巴黎最古老室內市場，午餐推薦：日式便當、摩洛哥料理、法式三明治", maps:"https://maps.google.com/?q=Marche+des+Enfants+Rouges+Paris"},
+        {name:"卡納瓦雷博物館 Musée Carnavalet", time:"", note:"巴黎歷史博物館，常設免費，花園咖啡氣氛絕佳", maps:"https://maps.google.com/?q=Musee+Carnavalet+Paris"},
+        {name:"孚日廣場 Place des Vosges", time:"", note:"巴黎最美廣場，紅磚拱廊環繞", maps:"https://maps.google.com/?q=Place+des+Vosges+Paris"},
+        {name:"Dover Street Market Paris", time:"", note:"頂級概念潮流店", maps:"https://maps.google.com/?q=Dover+Street+Market+Paris"},
+        {name:"Merci", time:"", note:"瑪黑區必逛選物店", maps:"https://maps.google.com/?q=Merci+Paris"}
+      ],
+      evening:[
+        {name:"Benedict 鵝肝漢堡", time:"", note:"招牌：鵝肝漢堡、Shakshouka，法國客人多", maps:"https://maps.google.com/?q=Benedict+Paris+Marais"},
+        {name:"傷兵院燈光秀 Invalides", time:"22:00", note:"已預約 ✦ 燈光音樂秀，氣勢磅礡", maps:"https://maps.google.com/?q=Les+Invalides+Paris"}
+      ]
+    },
+    tips:[], food:[
+      {type:"市集", name:"Marché des Enfants Rouges", desc:"巴黎最古老室內市場，各國料理齊聚，非常熱鬧。", price:"€10–20"},
+      {type:"瑪黑", name:"Carette", desc:"孚日廣場旁，招牌拿破崙酥與熱可可，老店氣氛濃厚。", price:"€15–25"},
+      {type:"瑪黑", name:"Carré Pain de Mie", desc:"招牌蝦排三明治與 French Toast，外帶綠盒好拍。", price:"€10–16"}
+    ], pass:false
+  },
+  {
+    date:"5/23", dow:"Sat", label:"La Vallée Village",
+    summary:"購物天堂日！距巴黎 40 分鐘的 La Vallée Village 奢華購物村，百家頂級精品與設計師品牌齊聚，法式村莊建築，環境寬敞舒適。備案可加入 Dior 藝廊。",
+    slots:{
+      morning:[{name:"La Vallée Village 購物村", time:"", note:"巴黎近郊奢華 Outlet · 記得帶護照辦退稅", maps:"https://maps.google.com/?q=La+Vallee+Village+Serris"}],
+      afternoon:[{name:"繼續購物", time:"", note:"建議午餐在 Village 內解決，開到傍晚", maps:""}],
+      evening:[{name:"Dior 藝廊（備案）", time:"", note:"如提早結束購物可前往", maps:"https://maps.google.com/?q=Galerie+Dior+Paris"}]
+    },
+    tips:[], food:[
+      {type:"Village 內", name:"Village 餐廳", desc:"購物村內有多間餐廳，建議在此用餐節省時間。", price:"€15–30"}
+    ], pass:false
+  },
+  {
+    date:"5/24", dow:"Sun", label:"自由日",
+    summary:"最後一個完整的巴黎白天。清晨的巴士底市集有最新鮮的食材與花卉，散步到附近的阿里格市場繼續尋寶，下午隨心漫步，傍晚在 Jelly Cat 買幾隻毛絨動物當紀念品。",
+    slots:{
+      morning:[
+        {name:"Marché Bastille 巴士底市集", time:"07:00", note:"週日限定，7:00–15:00 · 新鮮食材、花卉、起司，巴黎人的週日早晨", maps:"https://maps.google.com/?q=Marche+de+la+Bastille+Paris"},
+        {name:"Marché d\'Aligre 阿里格市場", time:"", note:"步行 10 分鐘，至 15:00，更在地化的跳蚤 + 蔬果市場", maps:"https://maps.google.com/?q=Marche+d+Aligre+Paris"}
+      ],
+      afternoon:[
+        {name:"巴黎聖母院彌撒（備案）", time:"", note:"週日彌撒，免費參加，感受神聖氛圍", maps:"https://maps.google.com/?q=Notre+Dame+Cathedral+Paris"},
+        {name:"下午自由逛街", time:"", note:"最後一天，隨心所欲", maps:""},
+        {name:"Jelly Cat", time:"", note:"英國毛絨玩具品牌，巴黎店必買伴手禮", maps:"https://maps.google.com/?q=Jellycat+Paris"}
+      ]
+    },
+    tips:[], food:[
+      {type:"市集野餐", name:"Marché Bastille", desc:"在市集買食材，去附近公園野餐，最道地的巴黎週日體驗。", price:"依選購"},
+      {type:"法式小酒館", name:"Bistrot Paul Bert", desc:"11 區的經典法式小酒館，招牌牛排薯條。", price:"€35–50"}
+    ], pass:false
+  },
+  {
+    date:"5/25", dow:"Mon", label:"返程",
+    summary:"再見了，巴黎。辦理退稅後，搭 BR88 長榮航空，從巴黎一航踏上歸途。帶著滿滿的回憶與行李，直到下次再相見。",
+    slots:{
+      morning:[
+        {name:"辦理退稅 PABLO 機器", time:"", note:"戴高樂機場自動退稅機，記得準備所有退稅單據", maps:"https://maps.google.com/?q=Charles+de+Gaulle+Airport+Paris"},
+        {name:"✈ BR88 巴黎一航出發", time:"11:20", note:"長榮航空，建議提早 3 小時到機場", maps:"https://maps.google.com/?q=Paris+Charles+de+Gaulle+Terminal+1"}
+      ],
+      evening:[{name:"機上供餐", time:"", note:"Au revoir, Paris · À bientôt !", maps:""}]
+    },
+    tips:[], food:[
+      {type:"機場", name:"出發前最後一杯咖啡", desc:"在 CDG 機場找一間咖啡館，和巴黎道別。", price:"€4–8"}
+    ], pass:false
   }
-});
-
-// ══════════════════════════════════════
-//  STATE
-// ══════════════════════════════════════
-const TRIP_START=new Date('2026-05-10');
-const TRIP_END=new Date('2026-05-25');
-let calYear=2026,calMonth=4,currentView='cal',currentPanelDate=null;
-let editingEventId=null,editingTicketId=null,editingExpenseId=null,dragId=null;
-let state={events:[],tickets:[],expenses:[]};
-let fbReady=false;
-
-// ── SEED DATA ──
-const seedEvents=[
-  {id:'e1',date:'2026-05-10',slot:'evening',name:'BR87 桃園→巴黎 出發',time:'23:30',maps:'',note:'BR87 桃園二航出發'},
-  {id:'e2',date:'2026-05-11',slot:'morning',name:'老佛爺百貨（圓頂）',time:'',maps:'https://maps.google.com/?q=Galeries+Lafayette+Paris+Haussmann',note:''},
-  {id:'e3',date:'2026-05-11',slot:'morning',name:'紅磨坊',time:'',maps:'https://maps.google.com/?q=Moulin+Rouge+Paris',note:''},
-  {id:'e4',date:'2026-05-11',slot:'note',name:'住宿：巴黎小麻坊',time:'',maps:'https://maps.google.com/?q=44+rue+Pierre+Fontaine+75009+Paris',note:'44 rue Pierre fontaine paris 75009'},
-  {id:'e5',date:'2026-05-12',slot:'morning',name:'抵達巴黎',time:'',maps:'https://maps.google.com/?q=Paris',note:''},
-  {id:'e6',date:'2026-05-12',slot:'morning',name:'鏡廳、國王/皇后套房',time:'',maps:'https://maps.google.com/?q=Chateau+de+Versailles',note:''},
-  {id:'e7',date:'2026-05-12',slot:'afternoon',name:'蒙馬特',time:'',maps:'https://maps.google.com/?q=Montmartre+Paris',note:''},
-  {id:'e8',date:'2026-05-12',slot:'afternoon',name:'聖心堂',time:'',maps:'https://maps.google.com/?q=Sacre+Coeur+Montmartre',note:''},
-  {id:'e9',date:'2026-05-12',slot:'evening',name:'（巴黎歌劇院）',time:'',maps:'https://maps.google.com/?q=Opera+Garnier+Paris',note:''},
-  {id:'e10',date:'2026-05-13',slot:'morning',name:'凡爾賽宮',time:'',maps:'https://maps.google.com/?q=Palace+of+Versailles',note:''},
-  {id:'e11',date:'2026-05-13',slot:'morning',name:'裝飾藝術博物館',time:'',maps:'https://maps.google.com/?q=Musee+des+Arts+Decoratifs+Paris',note:''},
-  {id:'e12',date:'2026-05-13',slot:'afternoon',name:'後花園',time:'',maps:'https://maps.google.com/?q=Jardins+de+Versailles',note:''},
-  {id:'e13',date:'2026-05-13',slot:'afternoon',name:'杜樂麗公園',time:'',maps:'https://maps.google.com/?q=Tuileries+Garden+Paris',note:''},
-  {id:'e14',date:'2026-05-13',slot:'evening',name:'（巴黎歌劇院）',time:'',maps:'https://maps.google.com/?q=Opera+Garnier+Paris',note:''},
-  {id:'e15',date:'2026-05-13',slot:'note',name:'羅浮宮/龐畢度/皮諾假度',time:'',maps:'',note:''},
-  {id:'e16',date:'2026-05-14',slot:'morning',name:'皮諾美術館',time:'',maps:'https://maps.google.com/?q=Bourse+de+Commerce+Pinault+Paris',note:''},
-  {id:'e17',date:'2026-05-14',slot:'afternoon',name:'羅浮宮（有租導覽）',time:'14:00',maps:'https://maps.google.com/?q=Louvre+Museum+Paris',note:'需預約'},
-  {id:'e18',date:'2026-05-14',slot:'afternoon',name:'LE CAFÉ PIERRE HERMÉ',time:'',maps:'https://maps.google.com/?q=Pierre+Herme+Paris',note:'花神咖啡館'},
-  {id:'e19',date:'2026-05-14',slot:'afternoon',name:'奧賽美術館',time:'16:00',maps:'https://maps.google.com/?q=Musee+d+Orsay+Paris',note:''},
-  {id:'e20',date:'2026-05-15',slot:'morning',name:'羅丹美術館',time:'',maps:'https://maps.google.com/?q=Musee+Rodin+Paris',note:'PMP 第2天'},
-  {id:'e21',date:'2026-05-15',slot:'morning',name:'傷兵院（拿破崙墓）',time:'',maps:'https://maps.google.com/?q=Les+Invalides+Paris',note:''},
-  {id:'e22',date:'2026-05-15',slot:'morning',name:'莎士比亞書店',time:'',maps:'https://maps.google.com/?q=Shakespeare+and+Company+Paris',note:''},
-  {id:'e23',date:'2026-05-15',slot:'afternoon',name:'可麗餅店',time:'',maps:'https://maps.google.com/?q=Creperie+Paris',note:''},
-  {id:'e24',date:'2026-05-15',slot:'afternoon',name:'巴黎古監獄',time:'13:00',maps:'https://maps.google.com/?q=Conciergerie+Paris',note:''},
-  {id:'e25',date:'2026-05-15',slot:'afternoon',name:'聖徒禮拜堂',time:'16:00',maps:'https://maps.google.com/?q=Sainte+Chapelle+Paris',note:''},
-  {id:'e26',date:'2026-05-15',slot:'evening',name:'pho 5',time:'',maps:'https://maps.google.com/?q=Pho+5+Paris',note:''},
-  {id:'e27',date:'2026-05-15',slot:'evening',name:'（春天百貨）',time:'',maps:'https://maps.google.com/?q=Printemps+Paris',note:''},
-  {id:'e28',date:'2026-05-15',slot:'evening',name:'（中世紀博物館）',time:'',maps:'https://maps.google.com/?q=Musee+de+Cluny+Paris',note:''},
-  {id:'e29',date:'2026-05-16',slot:'morning',name:'巴黎聖母院（需預約）',time:'10:45',maps:'https://maps.google.com/?q=Notre+Dame+Cathedral+Paris',note:'需要預約'},
-  {id:'e30',date:'2026-05-16',slot:'morning',name:'香榭麗舍大道',time:'',maps:'https://maps.google.com/?q=Champs+Elysees+Paris',note:''},
-  {id:'e31',date:'2026-05-16',slot:'afternoon',name:'凱旋門（需預約）',time:'',maps:'https://maps.google.com/?q=Arc+de+Triomphe+Paris',note:''},
-  {id:'e32',date:'2026-05-16',slot:'afternoon',name:'建築與遺產城',time:'16:00',maps:'https://maps.google.com/?q=Cite+de+l+Architecture+Paris',note:''},
-  {id:'e33',date:'2026-05-16',slot:'evening',name:'艾菲爾鐵塔拍照',time:'18:00',maps:'https://maps.google.com/?q=Eiffel+Tower+Paris',note:''},
-  {id:'e34',date:'2026-05-16',slot:'evening',name:'（雅克瑪爾博物館）',time:'',maps:'https://maps.google.com/?q=Musee+Jacquemart+Andre+Paris',note:''},
-  {id:'e35',date:'2026-05-16',slot:'evening',name:'(dior 藝廊)',time:'',maps:'https://maps.google.com/?q=Galerie+Dior+Paris',note:''},
-  {id:'e36',date:'2026-05-17',slot:'morning',name:'（春天）老佛爺',time:'',maps:'https://maps.google.com/?q=Galeries+Lafayette+Paris',note:''},
-  {id:'e37',date:'2026-05-17',slot:'morning',name:'瑪黑區（孚日廣場）',time:'',maps:'https://maps.google.com/?q=Place+des+Vosges+Paris',note:''},
-  {id:'e38',date:'2026-05-17',slot:'morning',name:'逛巴士底市集',time:'',maps:'https://maps.google.com/?q=Marche+de+la+Bastille+Paris',note:'週日早上開'},
-  {id:'e39',date:'2026-05-17',slot:'morning',name:'兩果之家',time:'',maps:'https://maps.google.com/?q=La+Maison+de+Victor+Hugo+Paris',note:''},
-  {id:'e40',date:'2026-05-17',slot:'afternoon',name:'卡納瓦雷博物館',time:'',maps:'https://maps.google.com/?q=Musee+Carnavalet+Paris',note:''},
-  {id:'e41',date:'2026-05-17',slot:'afternoon',name:'戰神廣場',time:'',maps:'https://maps.google.com/?q=Champ+de+Mars+Paris',note:''},
-  {id:'e42',date:'2026-05-17',slot:'afternoon',name:'畢卡索美術館',time:'',maps:'https://maps.google.com/?q=Musee+Picasso+Paris',note:''},
-  {id:'e43',date:'2026-05-17',slot:'evening',name:'Merci',time:'',maps:'https://maps.google.com/?q=Merci+Paris',note:''},
-  {id:'e44',date:'2026-05-18',slot:'morning',name:'（巴黎聖母院 瀰散）',time:'',maps:'https://maps.google.com/?q=Notre+Dame+Cathedral+Paris',note:''},
-  {id:'e45',date:'2026-05-18',slot:'morning',name:'換飯店',time:'',maps:'',note:''},
-  {id:'e46',date:'2026-05-18',slot:'morning',name:'協和廣場',time:'',maps:'https://maps.google.com/?q=Place+de+la+Concorde+Paris',note:''},
-  {id:'e47',date:'2026-05-18',slot:'afternoon',name:'橘園美術館',time:'13:00',maps:'https://maps.google.com/?q=Musee+de+l+Orangerie+Paris',note:'PMP 第6天'},
-  {id:'e48',date:'2026-05-18',slot:'afternoon',name:'海軍府',time:'15:00',maps:'https://maps.google.com/?q=Hotel+de+la+Marine+Paris',note:''},
-  {id:'e49',date:'2026-05-18',slot:'evening',name:'塞納河遊',time:'',maps:'https://maps.google.com/?q=Seine+River+Cruise+Paris',note:''},
-  {id:'e50',date:'2026-05-18',slot:'evening',name:'Margaux 晚餐',time:'21:00',maps:'https://maps.google.com/?q=Restaurant+Margaux+Paris',note:''},
-  {id:'e51',date:'2026-05-18',slot:'note',name:'Hotel Acropole',time:'',maps:'https://maps.google.com/?q=Hotel+Acropole+199+Boulevard+Brune+75014+Paris',note:'199 Boulevard Brune, 75014 Paris'},
-  {id:'e52',date:'2026-05-19',slot:'morning',name:'迪士尼',time:'',maps:'https://maps.google.com/?q=Disneyland+Paris',note:''},
-  {id:'e53',date:'2026-05-20',slot:'morning',name:'日內瓦',time:'',maps:'https://maps.google.com/?q=Geneva+Switzerland',note:''},
-  {id:'e55',date:'2026-05-21',slot:'morning',name:'白朗峰',time:'',maps:'https://maps.google.com/?q=Mont+Blanc+Chamonix',note:''},
-  {id:'e56',date:'2026-05-21',slot:'morning',name:'霞慕尼',time:'',maps:'https://maps.google.com/?q=Chamonix+France',note:''},
-  {id:'e57',date:'2026-05-21',slot:'evening',name:'霞慕尼（住）',time:'',maps:'https://maps.google.com/?q=Chamonix+France',note:''},
-  {id:'e58',date:'2026-05-22',slot:'morning',name:'露慕尼',time:'',maps:'',note:''},
-  {id:'e59',date:'2026-05-22',slot:'morning',name:'回巴黎',time:'',maps:'https://maps.google.com/?q=Paris+France',note:''},
-  {id:'e60',date:'2026-05-22',slot:'evening',name:'傷兵院燈光秀',time:'22:00',maps:'https://maps.google.com/?q=Les+Invalides+Paris',note:''},
-  {id:'e61',date:'2026-05-23',slot:'morning',name:'（皮諾私人美術館）',time:'',maps:'https://maps.google.com/?q=Bourse+de+Commerce+Pinault',note:''},
-  {id:'e62',date:'2026-05-23',slot:'morning',name:'微微安拱廊（拱廊街×3）',time:'',maps:'https://maps.google.com/?q=Galerie+Vivienne+Paris',note:''},
-  {id:'e63',date:'2026-05-23',slot:'afternoon',name:'（逛街日）Jelly Cat',time:'',maps:'https://maps.google.com/?q=Jellycat+Paris',note:''},
-  {id:'e64',date:'2026-05-23',slot:'note',name:'Terminus Orleans Hotel',time:'',maps:'https://maps.google.com/?q=197+Boulevard+Brune+75014+Paris',note:'197 Boulevard Brune, 75014 Paris'},
-  {id:'e65',date:'2026-05-24',slot:'morning',name:'La Vallée Village',time:'',maps:'https://maps.google.com/?q=La+Vallee+Village+Serris',note:''},
-  {id:'e66',date:'2026-05-25',slot:'morning',name:'辦理退稅（PABLO 機器）',time:'',maps:'',note:''},
-  {id:'e67',date:'2026-05-25',slot:'morning',name:'11:20 BR88 巴黎一航',time:'11:20',maps:'https://maps.google.com/?q=Charles+de+Gaulle+Airport+Paris',note:'飛機返台'},
-  {id:'e68',date:'2026-05-25',slot:'evening',name:'機上供餐',time:'',maps:'',note:''},
-];
-const seedTickets=[
-  {id:'t1', name:'凡爾賽宮 Château de Versailles',      date:'2026-05-12',time:'09:45',people:2,status:'confirmed',ref:'',note:'',fileurl:'https://drive.google.com/file/d/1_zjcVDkz6JYdz9y8jX6hRh25C6G05LhA/view?usp=drive_link'},
-  {id:'t2', name:'羅浮宮 Musée du Louvre',               date:'2026-05-13',time:'14:00',people:2,status:'confirmed',ref:'',note:'',fileurl:'https://drive.google.com/file/d/1li8Pz8j7eIcHiTD-pTodq41V9E7rsx5F/view?usp=drive_link'},
-  {id:'t3', name:'奧賽美術館 Musée d\'Orsay',            date:'2026-05-14',time:'16:00',people:2,status:'confirmed',ref:'',note:'',fileurl:'https://drive.google.com/file/d/1T8qbRUmrIohi6pau7Y3WBVmdYbM0UQG_/view?usp=drive_link'},
-  {id:'t4', name:'巴黎聖母院鐘樓 Notre-Dame',            date:'2026-05-15',time:'10:45',people:2,status:'confirmed',ref:'',note:'',fileurl:'https://drive.google.com/file/d/1I9uSA1G4xOtNWKGj4yXfc5pegKbDjjZ2/view?usp=drive_link'},
-  {id:'t5', name:'巴黎古監獄 Conciergerie',              date:'2026-05-15',time:'13:00',people:2,status:'confirmed',ref:'',note:'',fileurl:'https://drive.google.com/file/d/1Q4VXl0oPjMWP0cKmT2eJ5-z3Qe1jDlEx/view?usp=drive_link'},
-  {id:'t6', name:'聖徒禮拜堂 Sainte-Chapelle',           date:'2026-05-15',time:'16:00',people:2,status:'confirmed',ref:'',note:'',fileurl:'https://drive.google.com/file/d/1Dvwcg6fQVZ56bq7cB4KQzV423sKa85_v/view?usp=drive_link'},
-  {id:'t7', name:'建築與遺產城 Cité de l\'Architecture', date:'2026-05-16',time:'16:00',people:2,status:'confirmed',ref:'',note:'',fileurl:'https://drive.google.com/file/d/12-Alqv-JWD0PPCcX30rJdmxvnhyadeTI/view?usp=drive_link'},
-  {id:'t8', name:'艾菲爾鐵塔 Tour Eiffel',               date:'2026-05-16',time:'18:00',people:2,status:'confirmed',ref:'',note:'',fileurl:''},
-  {id:'t9', name:'橘園美術館 Musée de l\'Orangerie',     date:'2026-05-18',time:'13:00',people:2,status:'confirmed',ref:'',note:'',fileurl:'https://drive.google.com/file/d/1Rg79mmg9yl4YO8ldmlBH8rPb1hJzZfPy/view?usp=drive_link'},
-  {id:'t10',name:'海軍府 Hôtel de la Marine',            date:'2026-05-18',time:'15:00',people:2,status:'confirmed',ref:'',note:'',fileurl:'https://drive.google.com/file/d/1sq-rT0-D4FgwfDBZqIJqiXPBKe0Uq5po/view?usp=drive_link'},
-  {id:'t11',name:'Margaux 餐廳',                         date:'2026-05-18',time:'21:00',people:2,status:'confirmed',ref:'',note:'',fileurl:''},
-  {id:'t12',name:'迪士尼樂園 Disneyland Paris',          date:'2026-05-19',time:'09:00',people:2,status:'confirmed',ref:'',note:'',fileurl:'https://drive.google.com/file/d/1wHN0BSwne2pOpWcq5dAjgN5cpBNkp54Q/view?usp=drive_link'},
-  {id:'t13',name:'Bistrot Chez Rémy',                    date:'2026-05-19',time:'12:30',people:2,status:'confirmed',ref:'',note:'迪士尼內餐廳',fileurl:''},
-  {id:'t14',name:'榮軍院燈光秀 Invalides',               date:'2026-05-22',time:'22:00',people:2,status:'confirmed',ref:'',note:'',fileurl:'https://drive.google.com/file/d/14IZT0BxndtlTQbJXuvFab1QYI7ufLRUK/view?usp=drive_link'},
-];
-const seedExpenses=[
-  {id:'x1',date:'2026-05-14',name:'羅浮宮門票 + 導覽',cat:'景點',cardEur:38,cashEur:0,note:'2人'},
-  {id:'x2',date:'2026-05-13',name:'凡爾賽宮門票',cat:'景點',cardEur:30,cashEur:0,note:'2人'},
-  {id:'x3',date:'2026-05-12',name:'地鐵票 10日券',cat:'交通',cardEur:0,cashEur:42,note:''},
-  {id:'x4',date:'2026-05-18',name:'PMP 博物館通票',cat:'景點',cardEur:88,cashEur:0,note:'€88≈NT$4404'},
-  {id:'x5',date:'2026-05-11',name:'巴黎小麻坊住宿',cat:'住宿',cardEur:180,cashEur:0,note:''},
 ];
 
-// ══════════════════════════════════════
-//  FIREBASE SYNC
-// ══════════════════════════════════════
-function setSyncStatus(status, msg) {
-  const bar=document.getElementById('sync-bar');
-  const msgEl=document.getElementById('sync-msg');
-  bar.className='';
-  if(status) bar.classList.add(status);
-  msgEl.textContent=msg;
+const SLOT_LABELS = {morning:"Morning · 早上", afternoon:"Afternoon · 下午", evening:"Evening · 晚上"};
+
+function renderStrip() {
+  const strip = document.getElementById("day-strip");
+  strip.innerHTML = DAYS.map((d,i) => `
+    <div class="day-pill has-events" onclick="showDay(${i})" id="pill-${i}">
+      <span class="dp-date">${d.date}</span>
+      <span class="dp-day">${d.dow}</span>
+      <span class="dp-dot"></span>
+    </div>`).join("");
+  showDay(1);
 }
 
-function initFirebase(user) {
-  setSyncStatus('','正在載入資料...');
-  db.ref(ROOT).once('value').then(snap=>{
-    const data=snap.val();
-    if(data && (data.events||data.tickets||data.expenses)){
-      state.events  = data.events   ? Object.values(data.events)   : [];
-      state.tickets = data.tickets  ? Object.values(data.tickets)  : [];
-      state.expenses= data.expenses ? Object.values(data.expenses) : [];
-    } else {
-      state.events=seedEvents; state.tickets=seedTickets; state.expenses=seedExpenses;
-      pushAllToFirebase();
-    }
-    fbReady=true;
-    setSyncStatus('synced','🔐 '+user.displayName+' · 已連線同步');
-    renderCalendar();
-    // Realtime listener
-    db.ref(ROOT).on('value', snap=>{
-      if(!fbReady) return;
-      const d=snap.val(); if(!d) return;
-      state.events  = d.events   ? Object.values(d.events)   : state.events;
-      state.tickets = d.tickets  ? Object.values(d.tickets)  : state.tickets;
-      state.expenses= d.expenses ? Object.values(d.expenses) : state.expenses;
-      renderCalendar();
-      if(currentPanelDate) renderPanelEvents(currentPanelDate);
-      if(currentView==='list') renderListView();
-      const activeTab=document.querySelector('.nav-btn.active');
-      if(activeTab){
-        if(activeTab.textContent.includes('預約')) renderTickets();
-        if(activeTab.textContent.includes('花費')) renderExpenses();
+function showDay(idx) {
+  document.querySelectorAll(".day-pill").forEach((p,i) => p.classList.toggle("active", i===idx));
+  const container = document.getElementById("day-details");
+  const day = DAYS[idx];
+
+  let slotsHtml = "";
+  ["morning","afternoon","evening"].forEach(slot => {
+    if (!day.slots[slot] || !day.slots[slot].length) return;
+    slotsHtml += `<div class="tl-slot">
+      <div class="tl-slot-label ${slot}">${SLOT_LABELS[slot]}</div>
+      <div class="tl-items">
+        ${day.slots[slot].map(ev => `
+          <div class="tl-item">
+            <div style="flex:1;">
+              ${ev.time ? `<div class="tl-item-time">🕐 ${ev.time}</div>` : ""}
+              <div class="tl-item-name">
+                ${ev.maps ? `<a href="${ev.maps}" target="_blank">↗ ${ev.name}</a>` : ev.name}
+              </div>
+              ${ev.note ? `<div class="tl-item-note">${ev.note}</div>` : ""}
+              <textarea class="spot-note" rows="1" placeholder="＋ 新增備註、推薦連結..."
+                onfocus="this.style.borderColor='var(--gold)';autoResize(this)"
+                onblur="this.style.borderColor='rgba(184,150,90,0.3)'"
+                oninput="autoResize(this)"></textarea>
+            </div>
+            ${(ev.pass || day.pass) ? `<span class="tl-item-tag">通行證</span>` : ""}
+          </div>`).join("")}
+      </div>
+    </div>`;
+  });
+
+  let tipsHtml = "";
+  if (day.tips && day.tips.length) {
+    tipsHtml = `<div style="margin-top:48px;">
+      <div class="section-label" style="margin-bottom:14px;">Conseils · 攻略錦囊</div>
+      <div class="tips-grid">
+        ${day.tips.map(t => `
+          <div class="tip-card">
+            <div class="tip-icon">${t.icon}</div>
+            <div>
+              <div class="tip-title">${t.title}</div>
+              <div class="tip-content">${t.content}</div>
+            </div>
+          </div>`).join("")}
+      </div>
+    </div>`;
+  }
+
+  let foodHtml = "";
+  if (day.food && day.food.length) {
+    foodHtml = `<div style="margin-top:48px;">
+      <div class="section-label" style="margin-bottom:14px;">Gastronomie · 周邊美食</div>
+      <div class="food-grid">
+        ${day.food.map(f => `
+          <div class="food-card">
+            <div class="food-card-type">${f.type}</div>
+            <div class="food-card-name">${f.name}</div>
+            <div class="food-card-desc">${f.desc}</div>
+            <div class="food-card-price">${f.price}</div>
+          </div>`).join("")}
+      </div>
+    </div>`;
+  }
+
+  container.innerHTML = `
+    <div>
+      <div class="day-header">
+        <div class="day-number" data-month="May">${day.date.split("/")[1]}</div>
+        <div>
+          <div class="day-title-en">${day.dow} · ${day.label}</div>
+          <h3 class="day-title">${day.label}</h3>
+          <div class="day-summary">${day.summary}</div>
+        </div>
+      </div>
+      <div class="timeline">${slotsHtml}</div>
+      ${tipsHtml}
+      ${foodHtml}
+      <div class="notes-box" style="margin-top:40px;">
+        <div class="notes-box-label">✦ 當日補充筆記</div>
+        <textarea placeholder="在這裡記錄旅途中的發現、社群推薦或任何想留下的文字..."></textarea>
+      </div>
+      <div class="page-nav">
+        <button class="page-nav-btn" onclick="showDay(${idx-1})" ${idx===0?'style="opacity:0;pointer-events:none"':""}> ← 前一天</button>
+        <div class="page-nav-date">Day ${idx+1} of 16</div>
+        <button class="page-nav-btn" onclick="showDay(${idx+1})" ${idx===15?'style="opacity:0;pointer-events:none"':""}> 後一天 →</button>
+      </div>
+    </div>`;
+}
+
+function autoResize(el) { el.style.height="auto"; el.style.height=el.scrollHeight+"px"; }
+
+// ── RESERVATIONS ──
+const RESERVATIONS = [
+  {name:"巴黎歌劇院 Palais Garnier", date:"5/12", time:"10:30", fileurl:"https://drive.google.com/file/d/1KRVu_-aBqoB-lKul8LRFXO6LoDdb8XW4/view?usp=drive_link"},
+  {name:"羅浮宮 Musée du Louvre", date:"5/13", time:"14:00", fileurl:"https://drive.google.com/file/d/1li8Pz8j7eIcHiTD-pTodq41V9E7rsx5F/view?usp=drive_link"},
+  {name:"奧賽美術館 Musée d'Orsay", date:"5/14", time:"16:00", fileurl:"https://drive.google.com/file/d/1T8qbRUmrIohi6pau7Y3WBVmdYbM0UQG_/view?usp=drive_link"},
+  {name:"巴黎聖母院鐘樓 Notre-Dame", date:"5/15", time:"10:45", fileurl:"https://drive.google.com/file/d/1I9uSA1G4xOtNWKGj4yXfc5pegKbDjjZ2/view?usp=drive_link"},
+  {name:"巴黎古監獄 Conciergerie", date:"5/15", time:"13:00", fileurl:"https://drive.google.com/file/d/1Q4VXl0oPjMWP0cKmT2eJ5-z3Qe1jDlEx/view?usp=drive_link"},
+  {name:"聖徒禮拜堂 Sainte-Chapelle", date:"5/15", time:"16:00", fileurl:"https://drive.google.com/file/d/1Dvwcg6fQVZ56bq7cB4KQzV423sKa85_v/view?usp=drive_link"},
+  {name:"建築與遺產城 Cité de l'Architecture", date:"5/16", time:"16:00", fileurl:"https://drive.google.com/file/d/12-Alqv-JWD0PPCcX30rJdmxvnhyadeTI/view?usp=drive_link"},
+  {name:"艾菲爾鐵塔 Tour Eiffel", date:"5/16", time:"18:00", fileurl:""},
+  {name:"凡爾賽宮 Château de Versailles", date:"5/17", time:"10:00", fileurl:"https://drive.google.com/file/d/1T9bQU5Qxj8ZqggCg-J2qRmJOLjvw3B2G/view?usp=drive_link"},
+  {name:"橘園美術館 Musée de l'Orangerie", date:"5/18", time:"13:00", fileurl:"https://drive.google.com/file/d/1Rg79mmg9yl4YO8ldmlBH8rPb1hJzZfPy/view?usp=drive_link"},
+  {name:"海軍府 Hôtel de la Marine", date:"5/18", time:"15:00", fileurl:"https://drive.google.com/file/d/1sq-rT0-D4FgwfDBZqIJqiXPBKe0Uq5po/view?usp=drive_link"},
+  {name:"Margaux 餐廳", date:"5/18", time:"21:00", fileurl:""},
+  {name:"迪士尼樂園 Disneyland Paris", date:"5/19", time:"09:00", fileurl:"https://drive.google.com/file/d/1wHN0BSwne2pOpWcq5dAjgN5cpBNkp54Q/view?usp=drive_link"},
+  {name:"Bistrot Chez Rémy", date:"5/19", time:"12:30", fileurl:""},
+  {name:"榮軍院燈光秀 Invalides", date:"5/22", time:"22:00", fileurl:"https://drive.google.com/file/d/14IZT0BxndtlTQbJXuvFab1QYI7ufLRUK/view?usp=drive_link"}
+];
+
+function renderReservations() {
+  const grid = document.getElementById("reservations-grid");
+  if(!grid) return;
+  grid.innerHTML = RESERVATIONS.map(r => `
+    <div style="background:var(--white);border:1px solid var(--border);border-radius:10px;padding:18px;transition:all .2s;" onmouseover="this.style.borderColor='var(--gold-pale)'" onmouseout="this.style.borderColor='var(--border)'">
+      <div style="font-size:.6rem;letter-spacing:.12em;text-transform:uppercase;color:var(--sage);margin-bottom:7px;">✅ 已確認</div>
+      <div style="font-family:'Cormorant Garamond',serif;font-size:1.05rem;font-weight:400;margin-bottom:8px;">${r.name}</div>
+      <div style="font-family:'DM Mono',monospace;font-size:.75rem;color:var(--ink-light);margin-bottom:10px;">📅 ${r.date} · ${r.time} · 2 人</div>
+      ${r.fileurl
+        ? `<a href="${r.fileurl}" target="_blank" style="display:flex;align-items:center;gap:5px;padding:6px 10px;background:rgba(184,150,90,.08);border:1px solid var(--border);border-radius:6px;font-size:.72rem;color:var(--blue);text-decoration:none;">📂 相關檔案</a>`
+        : `<div style="padding:6px 10px;background:rgba(26,20,16,.03);border:1px dashed var(--border);border-radius:6px;font-size:.7rem;color:var(--gold);text-align:center;">尚未新增相關檔案</div>`
       }
-    });
-  }).catch(()=>{
-    setSyncStatus('error','⚠ 連線失敗，使用本機資料');
-    loadLocalState(); fbReady=false; renderCalendar();
-  });
+    </div>`).join("");
 }
 
-function pushAllToFirebase() {
-  if(!fbReady && state.events.length===0) return;
-  const evObj={},tkObj={},exObj={};
-  state.events.forEach(e=>evObj[e.id]=e);
-  state.tickets.forEach(t=>tkObj[t.id]=t);
-  state.expenses.forEach(x=>exObj[x.id]=x);
-  db.ref(ROOT).set({events:evObj,tickets:tkObj,expenses:exObj})
-    .then(()=>setSyncStatus('synced','🌐 已同步 · '+new Date().toLocaleTimeString('zh-TW')))
-    .catch(()=>setSyncStatus('error','⚠ 同步失敗'));
+function renderAllTips() {
+  const grid = document.getElementById("all-tips-grid");
+  if(!grid) return;
+  const daysWithTips = DAYS.filter(d => d.tips && d.tips.length > 0);
+  grid.innerHTML = daysWithTips.map(d => `
+    <div>
+      <div style="font-size:.65rem;letter-spacing:.18em;text-transform:uppercase;color:var(--gold);margin-bottom:8px;">${d.date} · ${d.label}</div>
+      <div class="tips-grid">
+        ${d.tips.map(t => `
+          <div class="tip-card">
+            <div class="tip-icon">${t.icon}</div>
+            <div>
+              <div class="tip-title">${t.title}</div>
+              <div class="tip-content">${t.content}</div>
+            </div>
+          </div>`).join("")}
+      </div>
+    </div>`).join("");
 }
 
-async function pushAllToFirebase() {
-  if(!fbReady && state.events.length===0) return;
-  const evObj={},tkObj={},exObj={};
-  state.events.forEach(e=>evObj[e.id]=e);
-  state.tickets.forEach(t=>tkObj[t.id]=t);
-  state.expenses.forEach(x=>exObj[x.id]=x);
-  try {
-    await fbSet('', {events:evObj,tickets:tkObj,expenses:exObj});
-    setSyncStatus('synced','🌐 已同步 · '+new Date().toLocaleTimeString('zh-TW'));
-  } catch(e) {
-    setSyncStatus('error','⚠ 同步失敗，請檢查網路');
-  }
-}
-
-function saveState(){
-  localStorage.setItem('paris2026fb',JSON.stringify(state));
-  if(fbReady) pushAllToFirebase();
-}
-
-function loadLocalState(){
-  try{
-    const s=localStorage.getItem('paris2026fb');
-    if(s){state=JSON.parse(s);}
-    else{state.events=seedEvents;state.tickets=seedTickets;state.expenses=seedExpenses;}
-  }catch(e){state.events=seedEvents;state.tickets=seedTickets;state.expenses=seedExpenses;}
-}
-
-// ══════════════════════════════════════
-//  TABS
-// ══════════════════════════════════════
-function showTab(tab,btn){
-  document.querySelectorAll('.tab-section').forEach(s=>s.classList.remove('active'));
-  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
-  document.getElementById('tab-'+tab).classList.add('active');
-  if(btn)btn.classList.add('active');
-  closePanel();
-  if(tab==='tickets')renderTickets();
-  if(tab==='expenses')renderExpenses();
-}
-function switchView(v){
-  currentView=v;
-  document.getElementById('view-cal').style.display=v==='cal'?'':'none';
-  document.getElementById('view-list').style.display=v==='list'?'':'none';
-  document.getElementById('vbtn-cal').classList.toggle('active',v==='cal');
-  document.getElementById('vbtn-list').classList.toggle('active',v==='list');
-  if(v==='list')renderListView();
-}
-
-// ══════════════════════════════════════
-//  CALENDAR
-// ══════════════════════════════════════
-const DAYS=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-const MONTHS=['January','February','March','April','May','June','July','August','September','October','November','December'];
-const MN=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-
-function prevMonth(){calMonth--;if(calMonth<0){calMonth=11;calYear--;}renderCalendar();}
-function nextMonth(){calMonth++;if(calMonth>11){calMonth=0;calYear++;}renderCalendar();}
-
-function renderCalendar(){
-  document.getElementById('cal-month-label').textContent=`${MONTHS[calMonth]} ${calYear}`;
-  document.getElementById('cal-headers').innerHTML=DAYS.map(d=>`<div class="cal-day-header">${d}</div>`).join('');
-  const grid=document.getElementById('cal-grid');grid.innerHTML='';
-  const first=new Date(calYear,calMonth,1).getDay();
-  const days=new Date(calYear,calMonth+1,0).getDate();
-  for(let i=0;i<first;i++){const c=document.createElement('div');c.className='cal-day other-month';c.innerHTML=`<div class="day-num"><span>${new Date(calYear,calMonth,-first+i+1).getDate()}</span></div>`;grid.appendChild(c);}
-  for(let d=1;d<=days;d++){
-    const ds=`${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-    const date=new Date(calYear,calMonth,d);
-    const isTrip=date>=TRIP_START&&date<=TRIP_END;
-    const evs=state.events.filter(e=>e.date===ds);
-    const c=document.createElement('div');
-    c.className='cal-day'+(isTrip?' trip-day':'')+(evs.length?' has-events':'');
-    let html=`<div class="day-num"><span>${d}</span><span class="day-label">${DAYS[date.getDay()]}</span></div><div class="day-events">`;
-    evs.slice(0,3).forEach(ev=>{const cls=ev.slot==='morning'?'chip-morning':ev.slot==='afternoon'?'chip-afternoon':ev.slot==='evening'?'chip-evening':'chip-note';html+=`<div class="event-chip ${cls}">${ev.name}</div>`;});
-    if(evs.length>3)html+=`<div class="add-more">+${evs.length-3} more</div>`;
-    html+=`</div><button class="day-add-btn" onclick="event.stopPropagation();openEventModal('${ds}')">+</button>`;
-    c.innerHTML=html;c.addEventListener('click',()=>openDayPanel(ds));grid.appendChild(c);
-  }
-  const trail=(first+days)%7===0?0:7-(first+days)%7;
-  for(let i=1;i<=trail;i++){const c=document.createElement('div');c.className='cal-day other-month';c.innerHTML=`<div class="day-num"><span>${i}</span></div>`;grid.appendChild(c);}
-  if(currentView==='list')renderListView();
-}
-
-// LIST VIEW
-function renderListView(){
-  const container=document.getElementById('list-view-content');container.innerHTML='';
-  const tripDays=[];let cur=new Date(TRIP_START);
-  while(cur<=TRIP_END){tripDays.push(cur.toISOString().slice(0,10));cur=new Date(cur.getTime()+86400000);}
-  tripDays.forEach(ds=>{
-    const evs=state.events.filter(e=>e.date===ds);
-    const d=new Date(ds+'T12:00:00');
-    const box=document.createElement('div');box.className='list-day trip-day';box.dataset.date=ds;
-    const preview=evs.filter(e=>e.slot!=='note').slice(0,2).map(ev=>{
-      const cls=ev.slot==='morning'?'chip-morning':ev.slot==='afternoon'?'chip-afternoon':'chip-evening';
-      return `<span class="event-chip ${cls}" style="font-size:.57rem;padding:1px 4px;">${ev.name}</span>`;
-    }).join('');
-    box.innerHTML=`<div class="list-day-header" onclick="toggleListDay(this)"><div class="list-day-left"><div><div class="list-day-date">${MN[d.getMonth()]} ${d.getDate()} <span style="color:var(--gold);font-size:.66rem;">${DAYS[d.getDay()]}</span></div><div class="list-day-chips">${preview}</div></div></div><div class="list-day-right"><span class="list-count">${evs.length} 項</span><span class="list-chevron">›</span></div></div><div class="list-day-body"><div class="list-events" id="list-evs-${ds}"></div><button class="list-add-btn" onclick="openEventModal('${ds}')">＋ 新增行程</button></div>`;
-    container.appendChild(box);
-  });
-}
-function toggleListDay(header){
-  const day=header.closest('.list-day');day.classList.toggle('open');
-  if(day.classList.contains('open'))renderListDayEvents(day.dataset.date);
-}
-function renderListDayEvents(ds){
-  const container=document.getElementById('list-evs-'+ds);if(!container)return;
-  const evs=state.events.filter(e=>e.date===ds);
-  if(!evs.length){container.innerHTML='<div style="font-size:.74rem;color:var(--warm-gray);padding:5px 0;">尚無行程</div>';return;}
-  const order=['morning','afternoon','evening','note'];
-  const lbl={morning:'☀ Morning',afternoon:'🌤 Afternoon',evening:'🌙 Evening',note:'📝 Note'};
-  const dc={morning:'dot-morning',afternoon:'dot-afternoon',evening:'dot-evening',note:'dot-note'};
-  container.innerHTML='';
-  order.forEach(slot=>{
-    const sEvs=evs.filter(e=>e.slot===slot);if(!sEvs.length)return;
-    const h=document.createElement('div');h.style.cssText='font-size:.58rem;text-transform:uppercase;letter-spacing:.1em;color:var(--warm-gray);margin:5px 0 2px;';h.textContent=lbl[slot];container.appendChild(h);
-    sEvs.forEach(ev=>{
-      const el=document.createElement('div');el.className='list-event-item';el.draggable=true;el.dataset.id=ev.id;
-      el.innerHTML=`<div class="drag-handle">⠿</div><div class="event-dot ${dc[slot]}"></div><div class="event-content"><div class="event-name">${ev.maps?`<a href="${ev.maps}" target="_blank" onclick="event.stopPropagation()">📍 ${ev.name}</a>`:ev.name}</div>${ev.time?`<div class="event-time">🕐 ${ev.time}</div>`:''}${ev.note?`<div class="event-note-text">${ev.note}</div>`:''}</div><div class="event-actions"><button class="act-btn" onclick="event.stopPropagation();openEventModal('${ds}','${ev.id}')">✎</button><button class="act-btn del" onclick="event.stopPropagation();deleteEvent('${ev.id}','${ds}')">✕</button></div>`;
-      setupDrag(el,ev.id,ds,'list');container.appendChild(el);
-    });
-  });
-}
-
-// PANEL
-function openDayPanel(ds){
-  currentPanelDate=ds;
-  const d=new Date(ds+'T12:00:00');
-  document.getElementById('panel-date').textContent=d.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});
-  const evs=state.events.filter(e=>e.date===ds);
-  const hotel=evs.find(e=>e.slot==='note'&&(e.name.includes('住宿')||e.name.toLowerCase().includes('hotel')));
-  document.getElementById('panel-hotel').innerHTML=hotel?`<div class="hotel-info"><div class="hotel-label">🏨 住宿</div><div class="hotel-name">${hotel.maps?`<a href="${hotel.maps}" target="_blank">${hotel.name}</a>`:hotel.name}</div>${hotel.note?`<div class="hotel-addr">📍 ${hotel.note}</div>`:''}</div>`:'';
-  renderPanelEvents(ds);
-  document.getElementById('panel-add-btn').onclick=()=>openEventModal(ds);
-  document.getElementById('detail-panel').classList.add('open');
-}
-function renderPanelEvents(ds){
-  const evs=state.events.filter(e=>e.date===ds);
-  const c=document.getElementById('panel-events');
-  if(!evs.length){c.innerHTML='<div class="empty-state"><div class="empty-icon">✦</div><p>尚無行程</p></div>';return;}
-  const order=['morning','afternoon','evening','note'];
-  const lbl={morning:'☀ Morning',afternoon:'🌤 Afternoon',evening:'🌙 Evening',note:'📝 Note'};
-  const dc={morning:'dot-morning',afternoon:'dot-afternoon',evening:'dot-evening',note:'dot-note'};
-  c.innerHTML='';
-  order.forEach(slot=>{
-    const sEvs=evs.filter(e=>e.slot===slot);if(!sEvs.length)return;
-    const h=document.createElement('div');h.style.cssText='font-size:.58rem;text-transform:uppercase;letter-spacing:.1em;color:var(--warm-gray);margin-top:3px;margin-bottom:1px;';h.textContent=lbl[slot];c.appendChild(h);
-    sEvs.forEach(ev=>{
-      const el=document.createElement('div');el.className='event-item';el.draggable=true;el.dataset.id=ev.id;
-      el.innerHTML=`<div class="drag-handle">⠿</div><div class="event-dot ${dc[slot]}"></div><div class="event-content"><div class="event-name">${ev.maps?`<a href="${ev.maps}" target="_blank" onclick="event.stopPropagation()">📍 ${ev.name}</a>`:ev.name}</div>${ev.time?`<div class="event-time">🕐 ${ev.time}</div>`:''}${ev.note?`<div class="event-note-text">${ev.note}</div>`:''}</div><div class="event-actions"><button class="act-btn" onclick="event.stopPropagation();openEventModal('${ds}','${ev.id}')">✎</button><button class="act-btn del" onclick="event.stopPropagation();deleteEvent('${ev.id}','${ds}')">✕</button></div>`;
-      setupDrag(el,ev.id,ds,'panel');c.appendChild(el);
-    });
-  });
-}
-function closePanel(){document.getElementById('detail-panel').classList.remove('open');}
-
-// DRAG
-function setupDrag(el,id,ds,ctx){
-  el.addEventListener('dragstart',()=>{dragId=id;el.classList.add('dragging');});
-  el.addEventListener('dragend',()=>{dragId=null;el.classList.remove('dragging','drag-over');});
-  el.addEventListener('dragover',e=>{e.preventDefault();el.classList.add('drag-over');});
-  el.addEventListener('dragleave',()=>el.classList.remove('drag-over'));
-  el.addEventListener('drop',e=>{
-    e.preventDefault();el.classList.remove('drag-over');
-    if(!dragId||dragId===id)return;
-    const ai=state.events.findIndex(x=>x.id===dragId),bi=state.events.findIndex(x=>x.id===id);
-    const[moved]=state.events.splice(ai,1);state.events.splice(bi,0,moved);
-    saveState();renderCalendar();
-    if(ctx==='panel')renderPanelEvents(ds);
-    if(ctx==='list')renderListDayEvents(ds);
-  });
-}
-
-// EVENT MODAL
-function openEventModal(ds,editId){
-  editingEventId=editId||null;
-  if(editId){
-    const ev=state.events.find(e=>e.id===editId);if(!ev)return;
-    document.getElementById('event-modal-title').textContent='編輯行程';
-    document.getElementById('ev-date').value=ev.date;document.getElementById('ev-slot').value=ev.slot;
-    document.getElementById('ev-name').value=ev.name;document.getElementById('ev-time').value=ev.time||'';
-    document.getElementById('ev-maps').value=ev.maps||'';document.getElementById('ev-note').value=ev.note||'';
-  }else{
-    document.getElementById('event-modal-title').textContent='新增行程';
-    document.getElementById('ev-date').value=ds||'';document.getElementById('ev-slot').value='morning';
-    ['ev-name','ev-time','ev-maps','ev-note'].forEach(id=>document.getElementById(id).value='');
-  }
-  document.getElementById('event-modal').classList.add('open');
-}
-function closeEventModal(){document.getElementById('event-modal').classList.remove('open');}
-function saveEvent(){
-  const date=document.getElementById('ev-date').value,name=document.getElementById('ev-name').value.trim();
-  if(!date||!name){showToast('請填寫日期和名稱');return;}
-  const data={date,slot:document.getElementById('ev-slot').value,name,time:document.getElementById('ev-time').value,maps:document.getElementById('ev-maps').value,note:document.getElementById('ev-note').value};
-  if(editingEventId){const ev=state.events.find(e=>e.id===editingEventId);if(ev)Object.assign(ev,data);}
-  else state.events.push({id:'e'+Date.now(),...data});
-  saveState();closeEventModal();renderCalendar();
-  if(currentPanelDate)renderPanelEvents(currentPanelDate);
-  if(currentView==='list')renderListView();
-  showToast(editingEventId?'已更新':'已新增');
-}
-function deleteEvent(id,ds){
-  if(!confirm('刪除此行程？'))return;
-  state.events=state.events.filter(e=>e.id!==id);
-  saveState();renderCalendar();
-  if(ds){renderPanelEvents(ds);renderListDayEvents(ds);}
-  showToast('已刪除');
-}
-
-// TICKETS
-function renderTickets(){
-  const grid=document.getElementById('tickets-grid');grid.innerHTML='';
-  state.tickets.forEach(tk=>{
-    const sl=tk.status==='confirmed'?'✅ 已確認':tk.status==='used'?'✔ 已使用':'⏳ 待確認';
-    const sc=tk.status==='confirmed'?'badge-confirmed':tk.status==='used'?'badge-used':'badge-pending';
-    const card=document.createElement('div');card.className=`ticket-card status-${tk.status}`;
-    const fileLinkHtml=tk.fileurl
-      ?`<a href="${tk.fileurl}" target="_blank" style="display:flex;align-items:center;gap:5px;margin-top:10px;padding:7px 10px;background:rgba(201,168,76,.1);border:1px solid var(--border);border-radius:7px;font-size:.72rem;color:var(--blue);text-decoration:none;transition:all .15s;" onmouseover="this.style.background='rgba(74,111,165,.12)'" onmouseout="this.style.background='rgba(201,168,76,.1)'">📂 <span>相關檔案</span></a>`
-      :`<div style="margin-top:10px;padding:7px 10px;background:rgba(26,20,16,.04);border:1px dashed var(--border);border-radius:7px;font-size:.7rem;color:var(--warm-gray);text-align:center;">尚未新增相關檔案</div>`;
-    card.innerHTML=`<div class="ticket-status-badge ${sc}">${sl}</div><div class="ticket-name">${tk.name}</div><div class="ticket-meta"><span>📅 ${tk.date}${tk.time?' · '+tk.time:''}</span><span>👥 ${tk.people} 人</span>${tk.ref?`<span>🔖 ${tk.ref}</span>`:''}${tk.note?`<span>📝 ${tk.note}</span>`:''}</div>${fileLinkHtml}<div class="ticket-actions" style="margin-top:10px;"><button class="t-btn" onclick="openTicketModal('${tk.id}')">✎ 編輯</button><button class="t-btn danger" onclick="deleteTicket('${tk.id}')">✕ 刪除</button></div>`;
-    grid.appendChild(card);
-  });
-}
-function openTicketModal(editId){
-  editingTicketId=editId||null;
-  if(editId){
-    const tk=state.tickets.find(t=>t.id===editId);if(!tk)return;
-    document.getElementById('tk-name').value=tk.name;document.getElementById('tk-date').value=tk.date;
-    document.getElementById('tk-time').value=tk.time||'';document.getElementById('tk-people').value=tk.people;
-    document.getElementById('tk-status').value=tk.status;document.getElementById('tk-ref').value=tk.ref||'';
-    document.getElementById('tk-note').value=tk.note||'';
-    document.getElementById('tk-fileurl').value=tk.fileurl||'';
-  }else{
-    ['tk-name','tk-date','tk-time','tk-ref','tk-note','tk-fileurl'].forEach(id=>document.getElementById(id).value='');
-    document.getElementById('tk-people').value=2;document.getElementById('tk-status').value='pending';
-  }
-  document.getElementById('ticket-modal').classList.add('open');
-}
-function closeTicketModal(){document.getElementById('ticket-modal').classList.remove('open');}
-function saveTicket(){
-  const name=document.getElementById('tk-name').value.trim(),date=document.getElementById('tk-date').value;
-  if(!name||!date){showToast('請填寫名稱和日期');return;}
-  const data={name,date,time:document.getElementById('tk-time').value,people:+document.getElementById('tk-people').value,status:document.getElementById('tk-status').value,ref:document.getElementById('tk-ref').value,note:document.getElementById('tk-note').value,fileurl:document.getElementById('tk-fileurl').value.trim()};
-  if(tempQrData)data.qr=tempQrData;
-  if(editingTicketId){const tk=state.tickets.find(t=>t.id===editingTicketId);if(tk)Object.assign(tk,data);}
-  else state.tickets.push({id:'t'+Date.now(),qr:'',...data});
-  saveState();closeTicketModal();renderTickets();showToast(editingTicketId?'已更新':'已新增');
-}
-function deleteTicket(id){if(!confirm('刪除？'))return;state.tickets=state.tickets.filter(t=>t.id!==id);saveState();renderTickets();showToast('已刪除');}
-
-// EXPENSES
-const CAT_META={'機票':{cls:'cat-flight',color:'#4A6FA5',icon:'✈'},'住宿':{cls:'cat-hotel',color:'#8C7B6B',icon:'🏨'},'景點':{cls:'cat-sight',color:'#C9A84C',icon:'🎫'},'交通':{cls:'cat-transport',color:'#5aa0b4',icon:'🚇'},'餐飲':{cls:'cat-food',color:'#7A9E87',icon:'🍽'},'購物':{cls:'cat-shopping',color:'#C4776A',icon:'🛍'},'其他':{cls:'cat-other',color:'#999',icon:'•'}};
-function getRate(){return parseFloat(document.getElementById('exch-rate').value)||35;}
-function syncPay(field){
-  const rate=getRate();
-  if(field==='card-eur'){const v=parseFloat(document.getElementById('exp-card-eur').value)||0;document.getElementById('exp-card-twd').value=v?Math.round(v*rate):'';}
-  else if(field==='card-twd'){const v=parseFloat(document.getElementById('exp-card-twd').value)||0;document.getElementById('exp-card-eur').value=v?(v/rate).toFixed(2):'';}
-  else if(field==='cash-eur'){const v=parseFloat(document.getElementById('exp-cash-eur').value)||0;document.getElementById('exp-cash-twd').value=v?Math.round(v*rate):'';}
-  else if(field==='cash-twd'){const v=parseFloat(document.getElementById('exp-cash-twd').value)||0;document.getElementById('exp-cash-eur').value=v?(v/rate).toFixed(2):'';}
-  updateExpTotal();
-}
-function updateExpTotal(){
-  const rate=getRate(),card=parseFloat(document.getElementById('exp-card-eur').value)||0,cash=parseFloat(document.getElementById('exp-cash-eur').value)||0,total=card+cash;
-  document.getElementById('exp-total-display').textContent=`€ ${total.toFixed(2)}  ≈ NT$ ${Math.round(total*rate).toLocaleString()}`;
-}
-function renderExpenses(){
-  const catF=document.getElementById('expense-filter-cat').value,payF=document.getElementById('expense-filter-pay').value;
-  const dayS=document.getElementById('expense-filter-day'),curDay=dayS.value;
-  const allDates=[...new Set(state.expenses.map(e=>e.date))].sort();
-  dayS.innerHTML='<option value="">所有日期</option>'+allDates.map(d=>`<option value="${d}"${d===curDay?' selected':''}>${d}</option>`).join('');
-  let exps=state.expenses;
-  if(catF)exps=exps.filter(e=>e.cat===catF);
-  if(payF==='card')exps=exps.filter(e=>(e.cardEur||0)>0&&(e.cashEur||0)===0);
-  else if(payF==='cash')exps=exps.filter(e=>(e.cashEur||0)>0&&(e.cardEur||0)===0);
-  else if(payF==='mix')exps=exps.filter(e=>(e.cardEur||0)>0&&(e.cashEur||0)>0);
-  if(curDay)exps=exps.filter(e=>e.date===curDay);
-  exps.sort((a,b)=>a.date.localeCompare(b.date));
-  const rate=getRate();
-  document.getElementById('expense-tbody').innerHTML=exps.map(ex=>{
-    const card=ex.cardEur||0,cash=ex.cashEur||0,total=card+cash;
-    const payType=card>0&&cash>0?'mix':card>0?'card':'cash';
-    const payLabel={'card':'💳 刷卡','cash':'💵 現金','mix':'🔀 混合'}[payType];
-    const meta=CAT_META[ex.cat]||CAT_META['其他'];
-    return `<tr><td style="font-family:'DM Mono',monospace;font-size:.72rem;">${ex.date}</td><td>${ex.name}${ex.note?`<br><span style="font-size:.64rem;color:var(--warm-gray)">${ex.note}</span>`:''}</td><td><span class="cat-badge ${meta.cls}">${meta.icon} ${ex.cat}</span></td><td><span class="pay-badge pay-${payType}">${payLabel}</span></td><td><span class="amount-eur" style="color:var(--blue)">${card>0?'€'+card.toFixed(2):'—'}</span></td><td><span class="amount-eur" style="color:#3d7a55">${cash>0?'€'+cash.toFixed(2):'—'}</span></td><td><span class="amount-eur">€ ${total.toFixed(2)}</span></td><td><span class="amount-twd">NT$ ${Math.round(total*rate).toLocaleString()}</span></td><td><button class="act-btn" onclick="openExpenseModal('${ex.id}')">✎</button><button class="act-btn del" onclick="deleteExpense('${ex.id}')">✕</button></td></tr>`;
-  }).join('')||'<tr><td colspan="9" style="text-align:center;color:var(--warm-gray);padding:18px;">尚無記錄</td></tr>';
-  renderSummary();
-}
-function renderSummary(){
-  const rate=getRate();let totalCard=0,totalCash=0;
-  state.expenses.forEach(e=>{totalCard+=(e.cardEur||0);totalCash+=(e.cashEur||0);});
-  const total=totalCard+totalCash;
-  document.getElementById('sum-card-eur').textContent=`€ ${totalCard.toFixed(2)}`;
-  document.getElementById('sum-card-twd').textContent=`NT$ ${Math.round(totalCard*rate).toLocaleString()}`;
-  document.getElementById('sum-cash-eur').textContent=`€ ${totalCash.toFixed(2)}`;
-  document.getElementById('sum-cash-twd').textContent=`NT$ ${Math.round(totalCash*rate).toLocaleString()}`;
-  document.getElementById('sum-total-eur').textContent=`€ ${total.toFixed(2)}`;
-  document.getElementById('sum-total-twd').textContent=`NT$ ${Math.round(total*rate).toLocaleString()}`;
-  const cats={};
-  state.expenses.forEach(e=>{const card=e.cardEur||0,cash=e.cashEur||0;if(!cats[e.cat])cats[e.cat]={total:0,card:0,cash:0};cats[e.cat].total+=card+cash;cats[e.cat].card+=card;cats[e.cat].cash+=cash;});
-  const sorted=Object.entries(cats).sort((a,b)=>b[1].total-a[1].total),max=sorted[0]?.[1].total||1;
-  document.getElementById('bar-chart-content').innerHTML=sorted.map(([cat,v])=>{
-    const meta=CAT_META[cat]||CAT_META['其他'],cp=(v.card/max*100).toFixed(1),cashp=(v.cash/max*100).toFixed(1);
-    return `<div class="bar-row"><div class="bar-top"><div class="bar-label">${meta.icon} ${cat}</div><div class="bar-amounts">${v.card>0?`<span style="color:var(--blue)">💳€${v.card.toFixed(0)}</span>`:''}${v.cash>0?`<span style="color:#3d7a55">💵€${v.cash.toFixed(0)}</span>`:''}<span>= €${v.total.toFixed(0)}</span></div></div><div class="bar-track"><div class="bar-stack"><div class="bar-card-fill" style="width:${cp}%"></div><div class="bar-cash-fill" style="width:${cashp}%"></div></div></div></div>`;
-  }).join('');
-}
-function openExpenseModal(editId){
-  editingExpenseId=editId||null;
-  const clear=()=>{['exp-name','exp-note'].forEach(id=>document.getElementById(id).value='');document.getElementById('exp-date').value='';document.getElementById('exp-cat').value='餐飲';['exp-card-eur','exp-card-twd','exp-cash-eur','exp-cash-twd'].forEach(id=>document.getElementById(id).value='');document.getElementById('exp-total-display').textContent='€ 0.00';};
-  if(editId){
-    const ex=state.expenses.find(e=>e.id===editId);if(!ex)return;
-    document.getElementById('exp-name').value=ex.name;document.getElementById('exp-date').value=ex.date;
-    document.getElementById('exp-cat').value=ex.cat;document.getElementById('exp-note').value=ex.note||'';
-    const rate=getRate();
-    document.getElementById('exp-card-eur').value=ex.cardEur||'';document.getElementById('exp-card-twd').value=ex.cardEur?Math.round(ex.cardEur*rate):'';
-    document.getElementById('exp-cash-eur').value=ex.cashEur||'';document.getElementById('exp-cash-twd').value=ex.cashEur?Math.round(ex.cashEur*rate):'';
-    updateExpTotal();
-  }else{clear();}
-  document.getElementById('expense-modal').classList.add('open');
-}
-function closeExpenseModal(){document.getElementById('expense-modal').classList.remove('open');}
-function saveExpense(){
-  const name=document.getElementById('exp-name').value.trim(),date=document.getElementById('exp-date').value;
-  const cardEur=parseFloat(document.getElementById('exp-card-eur').value)||0,cashEur=parseFloat(document.getElementById('exp-cash-eur').value)||0;
-  if(!name||!date){showToast('請填寫項目和日期');return;}
-  if(!cardEur&&!cashEur){showToast('請填寫刷卡或現金金額');return;}
-  const data={name,date,cat:document.getElementById('exp-cat').value,cardEur,cashEur,note:document.getElementById('exp-note').value};
-  if(editingExpenseId){const ex=state.expenses.find(e=>e.id===editingExpenseId);if(ex)Object.assign(ex,data);}
-  else state.expenses.push({id:'x'+Date.now(),...data});
-  saveState();closeExpenseModal();renderExpenses();showToast(editingExpenseId?'已更新':'已新增');
-}
-function deleteExpense(id){if(!confirm('刪除？'))return;state.expenses=state.expenses.filter(e=>e.id!==id);saveState();renderExpenses();showToast('已刪除');}
-
-// ══════════════════════════════════════
-//  EXCEL EXPORT (SheetJS)
-// ══════════════════════════════════════
-function exportExpenses(){
-  const rate=getRate();
-  const rows=[['日期','項目','分類','付款方式','刷卡(€)','現金(€)','總額(€)','總額(NT$)','備注']];
-  state.expenses.sort((a,b)=>a.date.localeCompare(b.date)).forEach(ex=>{
-    const card=ex.cardEur||0,cash=ex.cashEur||0,total=card+cash;
-    const pay=card>0&&cash>0?'混合':card>0?'刷卡':'現金';
-    rows.push([ex.date,ex.name,ex.cat,pay,card||'',cash||'',total,Math.round(total*rate),ex.note||'']);
-  });
-  // Summary rows
-  rows.push([]);rows.push(['── 分類統計 ──']);
-  rows.push(['分類','刷卡(€)','現金(€)','總額(€)','總額(NT$)']);
-  const cats={};
-  state.expenses.forEach(e=>{if(!cats[e.cat])cats[e.cat]={card:0,cash:0};cats[e.cat].card+=(e.cardEur||0);cats[e.cat].cash+=(e.cashEur||0);});
-  Object.entries(cats).sort((a,b)=>b[1].card+b[1].cash-(a[1].card+a[1].cash)).forEach(([cat,v])=>{
-    const total=v.card+v.cash;rows.push([cat,v.card.toFixed(2),v.cash.toFixed(2),total.toFixed(2),Math.round(total*rate)]);
-  });
-  const totalCard=state.expenses.reduce((s,e)=>s+(e.cardEur||0),0);
-  const totalCash=state.expenses.reduce((s,e)=>s+(e.cashEur||0),0);
-  const grandTotal=totalCard+totalCash;
-  rows.push(['合計',totalCard.toFixed(2),totalCash.toFixed(2),grandTotal.toFixed(2),Math.round(grandTotal*rate)]);
-  downloadSheet(rows,'花費記錄','Paris2026_花費');
-}
-
-function exportItinerary(){
-  const rows=[['日期','星期','時段','景點/行程','時間','備注','Google Maps']];
-  const slotName={morning:'早上',afternoon:'下午',evening:'晚上',note:'備注'};
-  const tripDays=[];let cur=new Date(TRIP_START);
-  while(cur<=TRIP_END){tripDays.push(cur.toISOString().slice(0,10));cur=new Date(cur.getTime()+86400000);}
-  const dowCN=['日','一','二','三','四','五','六'];
-  tripDays.forEach(ds=>{
-    const evs=state.events.filter(e=>e.date===ds);
-    const d=new Date(ds+'T12:00:00');
-    if(evs.length===0){rows.push([ds,'(週'+dowCN[d.getDay()]+')','-','（無行程）','','','']);}
-    else{evs.forEach(ev=>rows.push([ds,'(週'+dowCN[d.getDay()]+')',slotName[ev.slot]||ev.slot,ev.name,ev.time||'',ev.note||'',ev.maps||'']));}
-  });
-  downloadSheet(rows,'行程表','Paris2026_行程');
-}
-
-function exportTickets(){
-  const rows=[['景點名稱','日期','時間','人數','狀態','預約號碼','備注']];
-  const statusName={confirmed:'已確認',pending:'待確認',used:'已使用'};
-  state.tickets.forEach(tk=>rows.push([tk.name,tk.date,tk.time||'',tk.people,statusName[tk.status]||tk.status,tk.ref||'',tk.note||'']));
-  downloadSheet(rows,'預約紀錄','Paris2026_預約');
-}
-
-function exportSummary(){
-  const rate=getRate();
-  const totalCard=state.expenses.reduce((s,e)=>s+(e.cardEur||0),0);
-  const totalCash=state.expenses.reduce((s,e)=>s+(e.cashEur||0),0);
-  const grandTotal=totalCard+totalCash;
-  const cats={};
-  state.expenses.forEach(e=>{if(!cats[e.cat])cats[e.cat]={card:0,cash:0};cats[e.cat].card+=(e.cardEur||0);cats[e.cat].cash+=(e.cashEur||0);});
-  const rows=[
-    ['Paris 2026 旅遊總結'],[''],
-    ['行程期間','2026/05/10 – 2026/05/25'],
-    ['總天數','16 天'],[''],
-    ['── 花費總覽 ──'],
-    ['','刷卡(€)','現金(€)','總額(€)','總額(NT$)'],
-    ['合計',totalCard.toFixed(2),totalCash.toFixed(2),grandTotal.toFixed(2),Math.round(grandTotal*rate)],[''],
-    ['── 各分類支出 ──'],
-    ['分類','刷卡(€)','現金(€)','總額(€)','總額(NT$)','佔比'],
-  ];
-  Object.entries(cats).sort((a,b)=>b[1].card+b[1].cash-(a[1].card+a[1].cash)).forEach(([cat,v])=>{
-    const total=v.card+v.cash,pct=grandTotal>0?(total/grandTotal*100).toFixed(1)+'%':'—';
-    rows.push([cat,v.card.toFixed(2),v.cash.toFixed(2),total.toFixed(2),Math.round(total*rate),pct]);
-  });
-  rows.push([''],['── 預約狀態 ──'],['景點','狀態','日期','預約號碼']);
-  state.tickets.forEach(tk=>rows.push([tk.name,tk.status==='confirmed'?'✅已確認':tk.status==='used'?'✔已使用':'⏳待確認',tk.date,tk.ref||'']));
-  downloadSheet(rows,'旅遊總結','Paris2026_總結');
-}
-
-function exportAll(){
-  const rate=getRate();
-  const wb=XLSX.utils.book_new();
-  // Sheet 1: Expenses
-  const expRows=[['日期','項目','分類','付款','刷卡€','現金€','總額€','NT$','備注']];
-  state.expenses.sort((a,b)=>a.date.localeCompare(b.date)).forEach(ex=>{
-    const card=ex.cardEur||0,cash=ex.cashEur||0,total=card+cash;
-    expRows.push([ex.date,ex.name,ex.cat,card>0&&cash>0?'混合':card>0?'刷卡':'現金',card||'',cash||'',total,Math.round(total*rate),ex.note||'']);
-  });
-  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(expRows),'花費明細');
-  // Sheet 2: Itinerary
-  const iRows=[['日期','時段','景點','時間','備注','Maps']];
-  const tripDays=[];let cur=new Date(TRIP_START);
-  while(cur<=TRIP_END){tripDays.push(cur.toISOString().slice(0,10));cur=new Date(cur.getTime()+86400000);}
-  const slotN={morning:'早上',afternoon:'下午',evening:'晚上',note:'備注'};
-  tripDays.forEach(ds=>state.events.filter(e=>e.date===ds).forEach(ev=>iRows.push([ds,slotN[ev.slot]||ev.slot,ev.name,ev.time||'',ev.note||'',ev.maps||''])));
-  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(iRows),'行程表');
-  // Sheet 3: Tickets
-  const tkRows=[['景點','日期','時間','人數','狀態','預約號碼','備注']];
-  state.tickets.forEach(tk=>tkRows.push([tk.name,tk.date,tk.time||'',tk.people,tk.status==='confirmed'?'已確認':tk.status==='used'?'已使用':'待確認',tk.ref||'',tk.note||'']));
-  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(tkRows),'預約紀錄');
-  // Sheet 4: Summary
-  const totalCard=state.expenses.reduce((s,e)=>s+(e.cardEur||0),0);
-  const totalCash=state.expenses.reduce((s,e)=>s+(e.cashEur||0),0);
-  const grandTotal=totalCard+totalCash;
-  const cats={};
-  state.expenses.forEach(e=>{if(!cats[e.cat])cats[e.cat]={card:0,cash:0};cats[e.cat].card+=(e.cardEur||0);cats[e.cat].cash+=(e.cashEur||0);});
-  const sumRows=[['分類統計'],[''],['分類','刷卡€','現金€','總額€','NT$','佔比']];
-  Object.entries(cats).sort((a,b)=>b[1].card+b[1].cash-(a[1].card+a[1].cash)).forEach(([cat,v])=>{
-    const total=v.card+v.cash;sumRows.push([cat,v.card.toFixed(2),v.cash.toFixed(2),total.toFixed(2),Math.round(total*rate),(grandTotal>0?total/grandTotal*100:0).toFixed(1)+'%']);
-  });
-  sumRows.push(['合計',totalCard.toFixed(2),totalCash.toFixed(2),grandTotal.toFixed(2),Math.round(grandTotal*rate),'100%']);
-  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(sumRows),'分類統計');
-  XLSX.writeFile(wb,'Paris2026_旅遊紀錄.xlsx');
-  showToast('已匯出 Paris2026_旅遊紀錄.xlsx');
-}
-
-function downloadSheet(rows,sheetName,fileName){
-  const wb=XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(rows),sheetName);
-  XLSX.writeFile(wb,fileName+'.xlsx');
-  showToast('已匯出 '+fileName+'.xlsx');
-}
-
-function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500);}
-document.querySelectorAll('.modal-overlay').forEach(o=>o.addEventListener('click',e=>{if(e.target===o)o.classList.remove('open');}));
-
-// ══════════════════════════════════════
-//  INIT
-// ══════════════════════════════════════
-loadLocalState();
-renderCalendar();</script>
+renderStrip();
+renderReservations();
+renderAllTips();
+</script>
 </body>
 </html>
