@@ -546,6 +546,30 @@ const DAYS = [
 
 const SLOT_LABELS = {morning:"Morning · 早上", afternoon:"Afternoon · 下午", evening:"Evening · 晚上"};
 
+// ── SPOT NOTES ──
+let spotNotes = {};
+const NOTES_REF_PATH = "paris2026/spotNotes";
+
+function saveSpotNote(key) {
+  const el = document.getElementById(`note-${key}`);
+  if(!el) return;
+  const val = el.value.trim();
+  spotNotes[key] = val;
+  db.ref(NOTES_REF_PATH + "/" + key).set(val)
+    .then(() => {
+      showSync("✦ 備注已儲存");
+      el.style.borderColor = "var(--sage)";
+      setTimeout(() => el.style.borderColor = "rgba(184,150,90,0.3)", 1500);
+    })
+    .catch(() => showSync("⚠ 儲存失敗，請重試"));
+}
+
+function loadSpotNotes() {
+  db.ref(NOTES_REF_PATH).once("value").then(snap => {
+    spotNotes = snap.val() || {};
+  });
+}
+
 function renderStrip() {
   const strip = document.getElementById("day-strip");
   strip.innerHTML = DAYS.map((d,i) => `
@@ -568,7 +592,10 @@ function showDay(idx) {
     slotsHtml += `<div class="tl-slot">
       <div class="tl-slot-label ${slot}">${SLOT_LABELS[slot]}</div>
       <div class="tl-items">
-        ${day.slots[slot].map(ev => `
+        ${day.slots[slot].map((ev, ei) => {
+          const noteKey = `${day.date}_${slot}_${ei}`;
+          const savedNote = spotNotes[noteKey] || "";
+          return `
           <div class="tl-item">
             <div style="flex:1;">
               ${ev.time ? `<div class="tl-item-time">🕐 ${ev.time}</div>` : ""}
@@ -576,13 +603,21 @@ function showDay(idx) {
                 ${ev.maps ? `<a href="${ev.maps}" target="_blank">↗ ${ev.name}</a>` : ev.name}
               </div>
               ${ev.note ? `<div class="tl-item-note">${ev.note}</div>` : ""}
-              <textarea class="spot-note" rows="1" placeholder="＋ 新增備註、推薦連結..."
-                onfocus="this.style.borderColor='var(--gold)';autoResize(this)"
-                onblur="this.style.borderColor='rgba(184,150,90,0.3)'"
-                oninput="autoResize(this)"></textarea>
+              <div style="display:flex;align-items:flex-end;gap:8px;margin-top:8px;">
+                <textarea id="note-${noteKey}" class="spot-note" rows="1"
+                  placeholder="＋ 新增備註、推薦連結..."
+                  onfocus="this.style.borderColor='var(--gold)';autoResize(this)"
+                  onblur="this.style.borderColor='rgba(184,150,90,0.3)'"
+                  oninput="autoResize(this)"
+                  style="flex:1;">${savedNote}</textarea>
+                <button onclick="saveSpotNote('${noteKey}')"
+                  style="flex-shrink:0;padding:4px 10px;background:var(--gold);color:white;border:none;border-radius:5px;font-family:'Jost',sans-serif;font-size:.65rem;cursor:pointer;letter-spacing:.05em;white-space:nowrap;transition:opacity .2s;"
+                  onmouseover="this.style.opacity='.8'" onmouseout="this.style.opacity='1'">儲存</button>
+              </div>
             </div>
             ${(ev.pass || day.pass) ? `<span class="tl-item-tag">通行證</span>` : ""}
-          </div>`).join("")}
+          </div>`;
+        }).join("")}
       </div>
     </div>`;
   });
@@ -874,6 +909,7 @@ auth.onAuthStateChanged(user => {
     document.getElementById("nav-user").textContent = "👤 " + user.displayName.split(" ")[0];
     document.getElementById("logout-btn").style.display="inline";
     initTipsSync();
+    loadSpotNotes();
   } else if(user) {
     auth.signOut();
     showSync("⚠ 此帳號無使用權限");
